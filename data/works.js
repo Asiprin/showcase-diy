@@ -238,6 +238,37 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "电子班牌改造",
+      "author": "血小板",
+      "form": "立式",
+      "desc": "二手会议预约屏改造，定制实木相框",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwbzg0rr-0-hx7o.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbzg53q-1-rv6q.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbzgfdg-2-q4q3.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbzgh6i-3-my63.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
