@@ -245,6 +245,14 @@
   .ig-slide .v-play{left:10px; bottom:12px;}
   .ig-slide .v-mute{right:10px; bottom:12px;}
   .ig-slide video{cursor:pointer;}
+  /* 视频编码不支持时的友好提示（不黑屏死等） */
+  .v-fail{
+    position:absolute; inset:0; z-index:7;
+    display:grid; place-items:center; text-align:center;
+    background:rgba(20,20,18,.55); color:#fff;
+    font-size:12px; line-height:1.9; padding:20px;
+  }
+  .v-fail a{color:#fff; text-underline-offset:3px; pointer-events:auto;}
 
   /* 点击图片放大（灯箱） */
   .ig-slide{cursor:zoom-in;}
@@ -533,7 +541,11 @@
       lbPlay.classList.toggle('show', isVideo);
       lbSound.classList.toggle('show', isVideo);
       if(isVideo){
-        if(lbVideo.src !== it.src){ lbVideo.src = it.src; lbVideo.load(); }
+        if(lbVideo.src !== it.src){
+          lbVideo.src = it.src; lbVideo.load();
+          lbVideo.__coverDone = false; lbVideo.poster = '';   /* 换视频重抓首帧 */
+          makeCover(lbVideo);
+        }
         /* 不再强制静音：沿用当前声音状态（与小图一致，默认静音） */
         syncPlayIcon();
         syncSoundIcon();
@@ -648,6 +660,39 @@
     });
   }
 
+  /* 视频首帧封面（Safari/iOS 兼容）：解码首帧 → canvas 截图 → 设为 poster */
+  function makeCover(v){
+    if(!v || v.__coverDone) return;
+    function snap(){
+      try{
+        if(!v.videoWidth) return;
+        var c = document.createElement('canvas');
+        c.width = v.videoWidth; c.height = v.videoHeight;
+        c.getContext('2d').drawImage(v, 0, 0);
+        v.poster = c.toDataURL('image/jpeg', 0.82);
+        v.__coverDone = true;
+      }catch(e){ /* 跨域视频抓不了帧，保留 #t 封面 */ }
+    }
+    v.addEventListener('loadeddata', function(){
+      if(v.__coverDone) return;
+      if(v.currentTime < 0.01){
+        v.addEventListener('seeked', snap, { once: true });
+        try{ v.currentTime = 0.05; }catch(e){ snap(); }
+      }else snap();
+    });
+    if(v.readyState >= 2) snap();
+  }
+
+  /* 视频编码不支持（如老设备放不了 HEVC）→ 友好提示 + 下载链接 */
+  function showVideoFail(slide, v){
+    if(!slide || slide.querySelector('.v-fail')) return;
+    var d = document.createElement('div');
+    d.className = 'v-fail';
+    d.innerHTML = '<div>此视频编码不受当前浏览器支持<br>（HEVC/H.265 等格式需要较新设备）<br>' +
+      '<a href="' + esc(v.getAttribute('src') || '') + '" download>下载观看</a></div>';
+    slide.appendChild(d);
+  }
+
   var SVG = {
     heart:'<svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
     bookmark:'<svg viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>',
@@ -658,6 +703,32 @@
     soundOn:'<svg viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M15 9.2a4 4 0 0 1 0 5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17.8 6.5a8 8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     soundOff:'<svg viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="m15.5 9.5 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
   };
+
+  /* ================= 点赞计数（第三方免费计数服务） ================= */
+  var COUNT_API = 'https://countapi.mileshilliard.com/api/v1';
+  function likeKey(w){
+    var s = String(w.title || '') + '|' + String(w.author || ''), h = 0;
+    for(var i = 0; i < s.length; i++){ h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+    return 'zk-like-' + h.toString(36) + '-' + s.length;
+  }
+  function countGet(key){
+    return fetch(COUNT_API + '/get/' + key).then(function(r){ return r.json(); })
+      .then(function(j){ return typeof j.value === 'number' ? j.value : null; }).catch(function(){ return null; });
+  }
+  function countHit(key){
+    return fetch(COUNT_API + '/hit/' + key).then(function(r){ return r.json(); })
+      .then(function(j){ return typeof j.value === 'number' ? j.value : null; }).catch(function(){ return null; });
+  }
+  function countSet(key, v){
+    return fetch(COUNT_API + '/set/' + key + '?value=' + v).then(function(r){ return r.json(); })
+      .then(function(j){ return typeof j.value === 'number' ? j.value : null; }).catch(function(){ return null; });
+  }
+  /* 页面加载即拉取各作品当前点赞数 */
+  function loadLikeCounts(){
+    document.querySelectorAll('.cnt[data-key]').forEach(function(el){
+      countGet(el.dataset.key).then(function(v){ if(v !== null) el.textContent = String(v); });
+    });
+  }
 
   /* ================= 渲染帖子 ================= */
   var wrap = document.getElementById('posts');
@@ -709,7 +780,7 @@
         '<button class="ig-btn save" aria-label="收藏" aria-pressed="false">' + SVG.bookmark + '</button>' +
       '</div>' +
       '<div class="ig-caption">' +
-        '<div class="likes"><span class="cnt">' + (w.likes || 0) + '</span> 次喜欢</div>' +
+        '<div class="likes"><span class="cnt" data-key="' + esc(likeKey(w)) + '">' + (w.likes || 0) + '</span> 次喜欢</div>' +
         '<p class="cap"><b>' + esc(w.title) + '</b>' + esc(w.desc) + '</p>' +
         (bomHTML ? '<h5>硬件清单</h5><ul>' + bomHTML + '</ul>' : '') +
       '</div>';
@@ -719,6 +790,7 @@
     });
   }
   renderPosts();
+  loadLikeCounts();
 
   /* 排序切换：正序 ⇄ 倒序 */
   (function(){
@@ -729,6 +801,7 @@
       sortDesc = !sortDesc;
       label.textContent = sortDesc ? '倒序' : '正序';
       renderPosts();
+      loadLikeCounts();
     });
   })();
 
@@ -797,12 +870,17 @@
       var slide = v.parentElement;
       var playBtn = slide.querySelector('.v-play');
       var muteBtn = slide.querySelector('.v-mute');
+      /* Safari/iOS 不认 #t 封面：canvas 抓首帧生成 poster */
+      makeCover(v);
+      /* 编码不支持（error 事件）→ 提示替代黑屏 */
+      v.addEventListener('error', function(){ showVideoFail(slide, v); });
       function syncPlay(){ if(playBtn) playBtn.innerHTML = v.paused ? SVG.play : SVG.pause; }
       function syncMute(){ if(muteBtn){ muteBtn.innerHTML = v.muted ? SVG.soundOff : SVG.soundOn; } }
       syncPlay(); syncMute();
       if(playBtn) playBtn.addEventListener('click', function(e){
         e.stopPropagation();
-        if(v.paused) v.play(); else v.pause();
+        if(v.paused){ var p = v.play(); if(p && p.catch) p.catch(function(){ showVideoFail(slide, v); }); }
+        else v.pause();
         syncPlay();
       });
       v.addEventListener('play', syncPlay);
@@ -841,38 +919,60 @@
     });
     applyRatio(0);
 
-    /* ---- 拖拽（弹簧回弹） ---- */
-    track.addEventListener('pointerdown', function(e){
-      if(e.target.tagName === 'VIDEO') return;
-      if(e.target.closest && e.target.closest('.v-btn')) return;   /* 视频按钮不启动拖拽 */
-      dragging = true; panned = false;
-      startX = lastX = e.clientX; startOff = -idx * width; vel = 0; lastT = performance.now();
-      track.classList.add('dragging');
-      if(raf){ cancelAnimationFrame(raf); raf = null; }
-      track.setPointerCapture(e.pointerId);
-    });
-    track.addEventListener('pointermove', function(e){
+    /* ---- 拖拽（弹簧回弹；触摸友好：窗口级监听＋轴向锁） ---- */
+    var startY = 0, axis = null, gestureT0 = 0;
+    function onDragMove(e){
       if(!dragging) return;
-      var dx = e.clientX - startX;
+      var dx = e.clientX - startX, dy = e.clientY - startY;
+      if(!axis){
+        if(Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        axis = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+        if(axis === 'y'){           /* 竖向手势：让页面正常滚动，放弃拖拽 */
+          dragging = false;
+          track.classList.remove('dragging');
+          springTo(startOff);
+          return;
+        }
+      }
       if(Math.abs(dx) > 4) panned = true;
       var edge = (idx === 0 && dx > 0) || (idx === n - 1 && dx < 0);
       setX(startOff + dx * (edge ? 0.3 : 1));          /* 越界阻尼 */
       var now = performance.now();
-      if(now > lastT){ vel = (e.clientX - lastX) / (now - lastT) * 1000; lastX = e.clientX; lastT = now; }
-    });
-    function endDrag(){
+      if(now - lastT > 4){ vel = (e.clientX - lastX) / (now - lastT) * 1000; lastX = e.clientX; lastT = now; }
+    }
+    function endDrag(commit){
       if(!dragging) return;
       dragging = false;
+      axis = null;
       track.classList.remove('dragging');
+      window.removeEventListener('pointermove', onDragMove);
+      window.removeEventListener('pointerup', onDragUp);
+      window.removeEventListener('pointercancel', onDragCancel);
       var dx = x - startOff;
       if(panned){ window.__suppressZoom = true; setTimeout(function(){ window.__suppressZoom = false; }, 320); }
-      if(dx < -width * 0.18 || vel < -500) go(idx + 1);
-      else if(dx > width * 0.18 || vel > 500) go(idx - 1);
+      /* 位移为主判据；速度仅在手势持续 >60ms 时可信（防瞬时抖动误判） */
+      var velOk = (performance.now() - gestureT0) > 60;
+      if(commit && (dx < -width * 0.18 || (velOk && vel < -500))) go(idx + 1);
+      else if(commit && (dx > width * 0.18 || (velOk && vel > 500))) go(idx - 1);
       else springTo(-idx * width);
       setTimeout(function(){ panned = false; }, 0);
     }
-    track.addEventListener('pointerup', endDrag);
-    track.addEventListener('pointercancel', endDrag);
+    function onDragUp(){ endDrag(true); }
+    function onDragCancel(){ endDrag(false); }   /* 系统接管手势（如滚动）→ 回弹不翻页 */
+    track.addEventListener('pointerdown', function(e){
+      if(e.target.tagName === 'VIDEO') return;
+      if(e.target.closest && e.target.closest('.v-btn')) return;   /* 视频按钮不启动拖拽 */
+      dragging = true; panned = false; axis = null;
+      startX = lastX = e.clientX; startY = e.clientY;
+      startOff = -idx * width; vel = 0; lastT = gestureT0 = performance.now();
+      track.classList.add('dragging');
+      if(raf){ cancelAnimationFrame(raf); raf = null; }
+      try{ track.setPointerCapture(e.pointerId); }catch(err){}
+      /* 窗口级监听：iOS 触摸拖出元素也不丢事件 */
+      window.addEventListener('pointermove', onDragMove);
+      window.addEventListener('pointerup', onDragUp);
+      window.addEventListener('pointercancel', onDragCancel);
+    });
 
     /* ---- 双击爱心 ---- */
     mediaBox.addEventListener('dblclick', function(e){
@@ -889,15 +989,29 @@
       setLike(true);
     });
 
-    /* ---- 爱心/收藏 ---- */
+    /* ---- 爱心/收藏（点赞数同步第三方计数服务） ---- */
+    var likeBusy = false;
     function setLike(v){
-      if(liked === v) return;
+      if(liked === v || likeBusy) return;
       liked = v;
       likeBtn.classList.toggle('on', liked);
       likeBtn.classList.add('pop');
       likeBtn.setAttribute('aria-pressed', String(liked));
-      cnt.textContent = String((w.likes || 0) + (liked ? 1 : 0));
       setTimeout(function(){ likeBtn.classList.remove('pop'); }, 340);
+      /* 乐观更新 + 远程同步 */
+      var cur = parseInt(cnt.textContent, 10) || 0;
+      cnt.textContent = String(Math.max(0, cur + (liked ? 1 : -1)));
+      var key = cnt.dataset.key;
+      if(!key) return;
+      likeBusy = true;
+      var done = function(v2){ if(v2 !== null) cnt.textContent = String(v2); likeBusy = false; };
+      if(liked){ countHit(key).then(done); }
+      else{
+        countGet(key).then(function(v2){
+          if(v2 === null){ likeBusy = false; return; }
+          return countSet(key, Math.max(0, v2 - 1)).then(done);
+        });
+      }
     }
     likeBtn.addEventListener('click', function(){ setLike(!liked); });
     saveBtn.addEventListener('click', function(){
