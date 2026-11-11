@@ -174,12 +174,19 @@
   .pv-head .av span{width:100%; height:100%;}
   .pv-head .who p:first-child{font-size:14px; font-weight:650; line-height:1.35;}
   .pv-head .who p:last-child{font-size:11.5px; color:var(--grey); line-height:1.4;}
-  .pv-media{position:relative; aspect-ratio:4/5; overflow:hidden; background:var(--media-bg); transition:aspect-ratio .32s cubic-bezier(.22,.7,.25,1);}
+  .pv-media{position:relative; aspect-ratio:4/3; overflow:hidden; background:var(--media-bg); transition:aspect-ratio .32s cubic-bezier(.22,.7,.25,1);}
   .pv-media .track{display:flex; height:100%; transition:transform .4s cubic-bezier(.22,.7,.25,1);}
   .pv-media .track img, .pv-media .track video{width:100%; height:100%; object-fit:cover; flex:0 0 100%;}
-  .pv-segs{position:absolute; inset:10px 11px auto; display:flex; gap:3.5px;}
-  .pv-segs .seg{flex:1; height:3px; border-radius:99px; background:rgba(255,255,255,.35); overflow:hidden;}
-  .pv-segs .seg i{display:block; height:100%; background:#fff; border-radius:99px; transform:scaleX(0); transform-origin:left;}
+  /* 预览视频按钮：左下播放/暂停、右下静音（与首页一致） */
+  .pv-vbtn{
+    position:absolute; z-index:8; width:32px; height:32px; border-radius:50%;
+    border:1px solid rgba(255,255,255,.5); background:rgba(20,20,18,.42);
+    display:grid; place-items:center; cursor:pointer;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  }
+  .pv-vbtn:hover{background:rgba(20,20,18,.62);}
+  .pv-play{left:9px; bottom:10px;}
+  .pv-mute{right:9px; bottom:10px;}
   .pv-nav{position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; padding:0; border-radius:50%;
     background:rgba(255,255,255,.82); border:1px solid rgba(255,255,255,.5); font-size:15px; cursor:pointer;
     opacity:0; transition:opacity .2s ease, background .2s ease; box-shadow:0 4px 12px rgba(0,0,0,.14);
@@ -210,7 +217,7 @@
 
   /* 作品管理列表 */
   .work-item{border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-bottom:11px; background:var(--panel-bg); display:flex; align-items:center; gap:13px;}
-  .work-item img{width:62px; height:46px; object-fit:cover; border-radius:8px; background:var(--media-bg);}
+  .work-item img, .work-item video{width:62px; height:46px; object-fit:cover; border-radius:8px; background:var(--media-bg);}
   .work-item .wi-main{flex:1; min-width:0;}
   .work-item .wi-title{font-size:14px; font-weight:650;}
   .work-item .wi-sub{font-size:11.5px; color:var(--grey);}
@@ -316,7 +323,7 @@
           </div>
           <div class="row2">
             <div><label>形态（如 桌面立式 / 壁挂）</label><input type="text" id="f-form"></div>
-            <div><label><input type="checkbox" id="f-sample" checked> 标注「示例」</label></div>
+            <div><label><input type="checkbox" id="f-sample"> 标注「示例」</label></div>
           </div>
           <label>成品介绍</label>
           <textarea id="f-desc" placeholder="怎么做的、有什么特点……"></textarea>
@@ -395,6 +402,8 @@
         <textarea id="s-sourceText"></textarea>
         <label>关于区小字</label>
         <input type="text" id="s-sourceFine">
+        <label>站长联系方式（展示在首页声明区，如 邮箱/微信；留空则不显示）</label>
+        <input type="text" id="s-contact" placeholder="例：hello@example.com">
         <div class="btn-row"><button id="btn-save-site">保存文案并发布</button></div>
       </div>
 
@@ -438,6 +447,7 @@
       sourceTitle: '关于本站',
       sourceText: '本站为社区 DIY 作品展示，<strong>非官方</strong>。作品基于开源项目 <a href="https://github.com/mrjoechen/ShowcaseApp" target="_blank" rel="noopener">ShowcaseApp</a> 制作——它能把你的设备变成数码相框。',
       sourceFine: '本站与 ShowcaseApp 官方无关，作品内容由站长上传。',
+      contact: '',
       footerText: 'ShowcaseApp DIY 作品展 · 非官方社区项目'
     },
     works: []
@@ -553,7 +563,7 @@
   function resetDraft(){
     draft = {
       id: 'WK-' + String((data.works.length + 1)).padStart(2,'0'),
-      title:'', author:'', form:'', desc:'', sample:true, bom:[], media:[]
+      title:'', author:'', form:'', desc:'', sample:false, bom:[], media:[]
     };
     draftFiles = [];
     editIdx = null;
@@ -561,7 +571,7 @@
     $('btn-publish').disabled = false;
     $('btn-publish').dataset.state = '';
     ['f-id','f-title','f-author','f-form','f-desc'].forEach(function(id){ $(id).value = ''; });
-    $('f-sample').checked = true;
+    $('f-sample').checked = false;
     renderBom(); renderThumbs(); renderAltFields();
     gotoStep(1);
   }
@@ -716,12 +726,15 @@
   function renderPreview(){
     var w = draft;
     var slides = w.media.map(function(m){
-      if(m.type === 'video') return '<div class="pv-slide"><video src="' + esc(m._local || m.src) + '" controls muted playsinline style="flex:0 0 100%;height:100%;object-fit:cover"></video></div>';
+      if(m.type === 'video') return '<div class="pv-slide" style="flex:0 0 100%;height:100%;position:relative">' +
+        '<video src="' + esc(m._local || m.src) + '" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video>' +
+        '<button class="pv-vbtn pv-play" aria-label="播放/暂停"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:#fff"><path d="M7 4.5v15l13-7.5z"/></svg></button>' +
+        '<button class="pv-vbtn pv-mute" aria-label="切换声音"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:#fff"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="m15.5 9.5 5 5m0-5-5 5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></button>' +
+        '</div>';
       return '<div class="pv-slide" style="flex:0 0 100%;height:100%;position:relative"><img src="' + esc(m._local || m.src || 'assets/media/work-frame-walnut.png') + '" alt="" style="width:100%;height:100%;object-fit:cover">' +
         (m.type === 'text' ? '<div style="position:absolute;left:0;right:0;bottom:0;padding:13px 16px;font-size:12.5px;line-height:1.75;color:#fff;background:linear-gradient(180deg,rgba(16,16,14,0),rgba(16,16,14,.55))">' + esc(m.text || '') + '</div>' : '') +
         '</div>';
     }).join('');
-    var segs = w.media.map(function(_, i){ return '<div class="seg"><i style="transform:scaleX(' + (i === 0 ? 1 : 0) + ')"></i></div>'; }).join('');
     var dots = w.media.map(function(_, i){
       var d = Math.abs(i);
       return '<i style="transform:scale(' + (i === 0 ? 1.2 : 0.5) + ');background:' + (i === 0 ? 'var(--accent, #B7472A)' : 'var(--dot)') + '"></i>';
@@ -732,11 +745,10 @@
     var initials = String(w.author || w.title || '·').split(/\s+/).map(function(x){ return x[0]; }).slice(0, 2).join('');
     $('pv-card').innerHTML =
       '<div class="pv-head"><span class="av">' + avatarSVG(w.author || w.title || '·') + '</span><div class="who">' +
-        '<p>' + esc(w.title || '未命名') + '</p>' +
-        '<p>' + esc(w.author || '') + (w.form ? ' · ' + esc(w.form) : '') + (w.id ? ' · ' + esc(w.id) : '') + (w.sample !== false ? ' · 示例' : '') + '</p>' +
+        '<p>' + esc(w.author || '匿名') + '</p>' +
+        '<p>' + esc(w.title || '未命名') + (w.form ? ' · ' + esc(w.form) : '') + (w.id ? ' · ' + esc(w.id) : '') + (w.sample === true ? ' · 示例' : '') + '</p>' +
       '</div></div>' +
       '<div class="pv-media"><div class="track" id="pv-track">' + slides + '</div>' +
-        '<div class="pv-segs">' + segs + '</div>' +
         '<div class="pv-count" id="pv-count">1/' + w.media.length + '</div>' +
         (w.media.length > 1 ? '<button class="pv-nav p" id="pv-prev">‹</button><button class="pv-nav n" id="pv-next">›</button>' : '') +
       '</div>' +
@@ -759,7 +771,7 @@
       var m = sl.querySelector('img, video');
       var rw = m ? (m.naturalWidth || m.videoWidth) : 0;
       var rh = m ? (m.naturalHeight || m.videoHeight) : 0;
-      if(rw && rh){ ratioCache[i] = rw + ' / ' + rh; return ratioCache[i]; }
+      if(rw && rh){ ratioCache[i] = (rw >= rh) ? '4 / 3' : '3 / 4'; return ratioCache[i]; }
       return null;
     }
     function applyPvRatio(i){
@@ -775,9 +787,6 @@
         d.style.transform = 'scale(' + (dist === 0 ? 1.2 : dist === 1 ? .9 : dist === 2 ? .7 : .5) + ')';
         d.style.background = dist === 0 ? 'var(--accent, #B7472A)' : 'var(--dot)';
       });
-      document.querySelectorAll('.pv-segs .seg i').forEach(function(s, i){
-        s.style.transform = 'scaleX(' + (i <= pvIdx ? 1 : 0) + ')';
-      });
       applyPvRatio(pvIdx);
     }
     if(n > 1){
@@ -792,6 +801,28 @@
       if(vid) vid.addEventListener('loadedmetadata', function(){ delete ratioCache[i]; if(i === pvIdx) applyPvRatio(i); });
     });
     applyPvRatio(0);
+    /* 预览视频按钮：播放/暂停（左下）＋静音（右下） */
+    pvMedia.querySelectorAll('.pv-slide video').forEach(function(v){
+      var sl = v.parentElement;
+      var playBtn = sl.querySelector('.pv-play');
+      var muteBtn = sl.querySelector('.pv-mute');
+      function syncPlay(){ if(playBtn) playBtn.innerHTML = v.paused
+        ? '<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:#fff"><path d="M7 4.5v15l13-7.5z"/></svg>'
+        : '<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:#fff"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>'; }
+      syncPlay();
+      if(playBtn) playBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(v.paused) v.play(); else v.pause();
+      });
+      v.addEventListener('play', syncPlay);
+      v.addEventListener('pause', syncPlay);
+      if(muteBtn) muteBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        v.muted = !v.muted;
+        muteBtn.style.opacity = v.muted ? '1' : '.55';
+        muteBtn.setAttribute('aria-label', v.muted ? '打开声音' : '静音');
+      });
+    });
   }
 
   /* --- 步骤 4：发布 --- */
@@ -873,9 +904,14 @@
   /* ================= 作品管理 ================= */
   function renderWorksList(){
     $('works-list').innerHTML = data.works.map(function(w, i){
+      /* 缩略图：优先图片，纯视频作品用视频首帧 */
       var cover = (w.media || []).find(function(m){ return m.type === 'image' && m.src; });
+      var coverVideo = !cover && (w.media || []).find(function(m){ return m.type === 'video' && m.src; });
+      var thumb = cover
+        ? '<img src="' + esc(cover.src) + '" alt="">'
+        : (coverVideo ? '<video src="' + esc(coverVideo.src) + '" muted playsinline preload="metadata"></video>' : '<img alt="">');
       return '<div class="work-item" data-i="' + i + '">' +
-        (cover ? '<img src="' + esc(cover.src) + '" alt="">' : '<img alt="">') +
+        thumb +
         '<div class="wi-main"><div class="wi-title">' + esc(w.title || '未命名') + '</div>' +
         '<div class="wi-sub">' + esc(w.id || '') + (w.author ? ' · by ' + esc(w.author) : '') + ' · ' + ((w.media || []).length) + ' 个素材</div></div>' +
         '<div class="ops"><button data-act="edit">编辑</button>' +
@@ -899,9 +935,8 @@
   var editIdx = null;   /* 非 null = 编辑已有作品 */
   function editWork(idx){
     var w = data.works[idx];
-    editIdx = idx;
     draft = JSON.parse(JSON.stringify(w));
-    draft.sample = w.sample !== false;
+    draft.sample = w.sample === true;
     draftFiles = [];
     $('f-id').value = draft.id || '';
     $('f-title').value = draft.title || '';
@@ -910,8 +945,11 @@
     $('f-desc').value = draft.desc || '';
     $('f-sample').checked = draft.sample;
     renderBom(); renderThumbs(); renderAltFields();
-    /* 跳回上传向导的「填写信息」步 */
+    /* 跳回上传向导的「填写信息」步（抑制 tab 重置逻辑） */
+    window.__switchingToEdit = true;
     document.querySelector('.tabs button[data-tab="upload"]').click();
+    window.__switchingToEdit = false;
+    editIdx = idx;
     gotoStep(2);
     $('btn-publish').textContent = '保存修改并发布';
     $('btn-again').style.display = 'none';
@@ -933,7 +971,7 @@
   });
 
   /* ================= 首页文案 ================= */
-  var SITE_FIELDS = ['title','subtitle','heroTitle','heroDesc','heroTags','worksNote','sourceTitle','sourceText','sourceFine','footerText'];
+  var SITE_FIELDS = ['title','subtitle','heroTitle','heroDesc','heroTags','worksNote','sourceTitle','sourceText','sourceFine','contact','footerText'];
   function fillSiteForm(){
     SITE_FIELDS.forEach(function(f){ var el = $('s-' + f); if(el) el.value = data.site[f] || ''; });
   }
@@ -960,6 +998,14 @@
       b.classList.add('on');
       document.querySelectorAll('.tab-page').forEach(function(p){ p.classList.remove('on'); });
       $('tab-' + b.dataset.tab).classList.add('on');
+      /* 点「上传作品」= 开始传新作品：编辑态下自动清空向导（程序性跳转除外） */
+      if(b.dataset.tab === 'upload' && !window.__switchingToEdit && typeof editIdx !== 'undefined' && editIdx !== null){
+        editIdx = null;
+        $('btn-publish').textContent = '发布这件作品';
+        resetDraft();
+        $('btn-again').style.display = 'none';
+        status('开始上传新作品', 'ok');
+      }
     });
   });
 
