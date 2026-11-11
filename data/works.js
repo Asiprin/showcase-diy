@@ -17,7 +17,7 @@ window.WORKS_DATA = {
       "id": "01",
       "title": "胡桃木平板相框",
       "author": "血小板",
-      "form": "立式",
+      "form": "",
       "desc": "采用 10.1 寸会议预约屏制作，安卓8 系统，12V 直供电，相框采用A4 相框。",
       "sample": false,
       "bom": [
