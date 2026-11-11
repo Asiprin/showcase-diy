@@ -101,6 +101,32 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "电子相框",
+      "author": "A01、孟",
+      "form": "立式",
+      "desc": "便携屏改造",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwbw8wls-0-1nzq.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbw8wlt-1-zzxh.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbw8wlt-2-mbu9.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
