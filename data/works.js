@@ -285,6 +285,27 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "铝合金外框",
+      "author": "Joe",
+      "form": "",
+      "desc": "大面积留白，铝合金外框，更具艺术感 高级感。",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwbzuwrl-0-xyf0.jpg",
+          "alt": ""
+        },
+        {
+          "type": "video",
+          "src": "assets/media/mmwbzwhoc-1-l3f8.mp4",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
