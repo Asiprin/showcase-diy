@@ -154,6 +154,31 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "触屏音箱/平板改造",
+      "author": "Raven",
+      "form": "立式",
+      "desc": "触屏音箱、平板改造",
+      "sample": false,
+      "bom": [
+        {
+          "name": "小爱触屏音箱",
+          "qty": "×1"
+        },
+        {
+          "name": "安卓平板",
+          "qty": "×1"
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwbyy4bk-0-f9v6.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
