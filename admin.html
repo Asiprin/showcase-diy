@@ -482,12 +482,18 @@
     if(!r.ok) throw new Error('读取 ' + path + ' 失败：HTTP ' + r.status);
     return r.json();
   }
-  async function apiPut(path, contentBase64, message, sha){
+  var committing = false;   /* 全局提交锁，防并发保存 */
+  async function apiPut(path, contentBase64, message, sha, isRetry){
     var body = { message: message, content: contentBase64, branch: cfg.branch };
     if(sha) body.sha = sha;
     var r = await fetch(API + '/repos/' + cfg.repo + '/contents/' + path, {
       method:'PUT', headers: Object.assign({'Content-Type':'application/json'}, ghHeaders()), body: JSON.stringify(body)
     });
+    if(r.status === 409 && !isRetry){
+      /* 版本冲突：别处刚改过这个文件 → 取最新 sha 自动重试一次 */
+      var fresh = await apiGet(path);
+      return apiPut(path, contentBase64, message, fresh ? fresh.sha : undefined, true);
+    }
     if(!r.ok) throw new Error('保存 ' + path + ' 失败：HTTP ' + r.status + ' ' + (await r.text()).slice(0,120));
     return r.json();
   }
@@ -516,9 +522,15 @@
   }
 
   async function commitData(message){
-    var js = '/* ShowcaseApp DIY 作品展 · 站点数据（由管理后台维护） */\nwindow.WORKS_DATA = ' + JSON.stringify(data, null, 2) + ';\n';
-    var old = await apiGet(DATA_PATH);
-    await apiPut(DATA_PATH, b64encode(js), message, old ? old.sha : undefined);
+    if(committing) throw new Error('已有保存正在进行，请等它完成');
+    committing = true;
+    try{
+      var js = '/* ShowcaseApp DIY 作品展 · 站点数据（由管理后台维护） */\nwindow.WORKS_DATA = ' + JSON.stringify(data, null, 2) + ';\n';
+      var old = await apiGet(DATA_PATH);
+      await apiPut(DATA_PATH, b64encode(js), message, old ? old.sha : undefined);
+    }finally{
+      committing = false;
+    }
   }
 
   /* ================= 连接 ================= */
@@ -843,6 +855,7 @@
         data.works[editIdx] = JSON.parse(JSON.stringify(draft));
       }else{
         data.works.push(JSON.parse(JSON.stringify(draft)));
+        editIdx = data.works.length - 1;   /* 后续保存转为更新，避免重复发布 */
       }
       await commitData((isEdit ? '更新作品：' : '发布作品：') + draft.title);
       renderWorksList();
