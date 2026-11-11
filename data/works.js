@@ -195,6 +195,49 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "3.5 寸麦金塔",
+      "author": "血小板",
+      "form": "",
+      "desc": "采用迷你安卓开发板+触摸屏幕+3D 打印外壳制作，5v 供电",
+      "sample": false,
+      "bom": [
+        {
+          "name": "nanopi neo4 rk3399 开发板",
+          "qty": "×1"
+        },
+        {
+          "name": "3.5 寸触摸屏 带HDMI 接口",
+          "qty": "×1"
+        },
+        {
+          "name": "麦金塔 3D 打印模型",
+          "qty": "×1"
+        },
+        {
+          "name": "HDMI 软排线",
+          "qty": "×1"
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwbz4fqr-0-oxw8.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbz4mp9-1-o5f2.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbz4s55-2-b3zj.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
