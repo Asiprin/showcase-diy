@@ -179,6 +179,22 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "电子相框",
+      "author": "谢週五",
+      "form": "",
+      "desc": "",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "video",
+          "src": "assets/media/mmwbz1bxg-0-ved8.mp4",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
