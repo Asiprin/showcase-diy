@@ -1,6 +1,6 @@
 # ShowcaseApp DIY 作品展
 
-把闲置的屏幕，造成一扇窗。
+把闲置的屏幕，做成艺术电子相框。
 
 社区 DIY 硬件作品展示站——展示大家用开源项目 [ShowcaseApp](https://github.com/mrjoechen/ShowcaseApp) 制作的实体数字相框作品。每件作品附成品介绍与硬件清单，看得见做法，也做得出来。
 
