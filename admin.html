@@ -175,7 +175,7 @@
   .pv-head .who p:first-child{font-size:14px; font-weight:650; line-height:1.35;}
   .pv-head .who p:last-child{font-size:11.5px; color:var(--grey); line-height:1.4;}
   .pv-media{position:relative; aspect-ratio:4/3; overflow:hidden; background:var(--media-bg); transition:aspect-ratio .32s cubic-bezier(.22,.7,.25,1);}
-  .pv-media .track{display:flex; height:100%; transition:transform .4s cubic-bezier(.22,.7,.25,1);}
+  .pv-media .track{position:absolute; inset:0; display:flex; transition:transform .4s cubic-bezier(.22,.7,.25,1);}
   .pv-media .track img, .pv-media .track video{width:100%; height:100%; object-fit:cover; flex:0 0 100%;}
   /* 预览视频按钮：左下播放/暂停、右下静音（与首页一致） */
   .pv-vbtn{
@@ -654,103 +654,6 @@
     }).catch(function(){ cb(''); });
   }
 
-  /* ================= 视频自动转码 H.264（ffmpeg.wasm，浏览器端完成） ================= */
-  var FF_MIRRORS = [
-    'https://cdn.jsdmirror.com/npm',
-    'https://cdn.jsdelivr.net/npm',
-    'https://fastly.jsdelivr.net/npm',
-    'https://unpkg.com'
-  ];
-  var FF = { ffmpeg: null, loading: null };
-  function fetchBlobURL(path, mime, onProg){
-    /* 多镜像回退取文件 → blob URL（绕过跨域 Worker/WASM 限制）；单镜像 180s 超时防卡死 */
-    return (function attempt(k){
-      if(k >= FF_MIRRORS.length) return Promise.reject(new Error('所有镜像均不可用'));
-      var ctrl = new AbortController();
-      var timer = setTimeout(function(){ ctrl.abort(); }, 180000);
-      return fetch(FF_MIRRORS[k] + path, { signal: ctrl.signal }).then(function(r){
-        if(!r.ok) throw 0;
-        if(!r.body || !r.body.getReader) return r.blob();
-        /* 流式读取以回报进度 */
-        var reader = r.body.getReader();
-        var total = parseInt(r.headers.get('content-length') || '0', 10);
-        var chunks = [], loaded = 0;
-        return (function pump(){
-          return reader.read().then(function(res){
-            if(res.done){
-              if(onProg) onProg(1);
-              return new Blob(chunks, { type: mime });
-            }
-            chunks.push(res.value); loaded += res.value.length;
-            if(onProg && total) onProg(loaded / total);
-            return pump();
-          });
-        })();
-      }).then(function(b){
-        clearTimeout(timer);
-        return URL.createObjectURL(new Blob([b], { type: mime }));
-      }).catch(function(){ clearTimeout(timer); return attempt(k + 1); });
-    })(0);
-  }
-  function loadScriptOnce(src){
-    return new Promise(function(res, rej){
-      if(window.FFmpegWASM) return res();
-      var s = document.createElement('script');
-      s.src = src; s.onload = res; s.onerror = function(){ s.remove(); rej(new Error('script ' + src)); };
-      document.head.appendChild(s);
-    });
-  }
-  function loadFFmpeg(){
-    if(FF.ffmpeg) return Promise.resolve(FF.ffmpeg);
-    if(FF.loading) return FF.loading;
-    status('首次使用转码引擎，下载中（约 30MB，请稍候）…');
-    /* UMD 主脚本用 script 标签（跨域无碍），逐镜像回退 */
-    FF.loading = (function(){
-      var i = 0;
-      return (function tryScript(){
-        if(i >= FF_MIRRORS.length) throw new Error('转码引擎下载失败');
-        return loadScriptOnce(FF_MIRRORS[i] + '/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js')
-          .catch(function(){ i++; return tryScript(); });
-      })();
-    })().then(function(){
-      var prog = { w: 0, j: 0, s: 0 };
-      function show(){
-        var pct = Math.round((prog.j + prog.s + prog.w) / 3 * 100);
-        status('转码引擎下载中 ' + pct + '%…');
-      }
-      return Promise.all([
-        fetchBlobURL('/@ffmpeg/ffmpeg@0.12.10/dist/umd/814.ffmpeg.js', 'text/javascript', function(p){ prog.j = p; show(); }),
-        fetchBlobURL('/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js', 'text/javascript', function(p){ prog.s = p; show(); }),
-        fetchBlobURL('/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm', 'application/wasm', function(p){ prog.w = p; show(); })
-      ]).then(function(urls){
-        var ff = new FFmpegWASM.FFmpeg();
-        return ff.load({ classWorkerURL: urls[0], coreURL: urls[1], wasmURL: urls[2] })
-          .then(function(){ FF.ffmpeg = ff; return ff; });
-      });
-    });
-    return FF.loading;
-  }
-  function transcodeToH264(file, onProgress){
-    return loadFFmpeg().then(function(ff){
-      var name = 'in-' + Date.now() + '.' + (file.name.split('.').pop() || 'mp4');
-      var out = 'out-' + Date.now() + '.mp4';
-      return file.arrayBuffer().then(function(buf){
-        return ff.writeFile(name, new Uint8Array(buf));
-      }).then(function(){
-        ff.on('progress', function(p){
-          if(onProgress) onProgress(Math.max(0, Math.min(1, p.progress || 0)));
-        });
-        return ff.exec(['-i', name, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
-          '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', out]);
-      }).then(function(code){
-        return ff.readFile(out).then(function(data){
-          try{ ff.deleteFile(name); ff.deleteFile(out); }catch(e){}
-          if(code !== 0) throw new Error('转码失败 code ' + code);
-          return new Blob([data.buffer], { type: 'video/mp4' });
-        });
-      });
-    });
-  }
   function addFiles(fileList){
     if(!draft){ status('请先连接 GitHub 仓库', 'err'); return; }
     var files = Array.prototype.slice.call(fileList);
@@ -772,33 +675,9 @@
         if(item.type === 'video'){
           sniffVideo(f, function(warn){
             if(!warn) return;
-            item._warn = warn + '，正在自动转码为 H.264…';
+            item._warn = warn + '，建议手动转成 H.264 (MP4) 后上传';
             renderThumbs();
-            if(f.size > 200 * 1024 * 1024){
-              item._warn = warn + '，文件超 200MB 请手动转码';
-              renderThumbs(); status('⚠ ' + f.name + '：' + item._warn, 'err');
-              return;
-            }
-            var dfIndex = draftFiles.findIndex(function(d){ return d.path === item.src; });
-            transcodeToH264(f, function(p){
-              item._warn = warn + '，自动转码中 ' + Math.round(p * 100) + '%';
-              renderThumbs();
-            }).then(function(blob){
-              var t = new FileReader();
-              t.onload = function(){
-                item._local = t.result;
-                item._warn = '';
-                item._trans = '已自动转码为 H.264';
-                if(dfIndex >= 0) draftFiles[dfIndex].contentBase64 = t.result.split(',')[1];
-                renderThumbs(); renderAltFields();
-                status('✓ ' + f.name + '：' + warn + ' → 已自动转码为 H.264', 'ok');
-              };
-              t.readAsDataURL(blob);
-            }).catch(function(err){
-              item._warn = warn + '，自动转码失败（' + (err && err.message || '未知') + '），将按原文件上传';
-              renderThumbs();
-              status('⚠ ' + f.name + '：自动转码失败（' + (err && err.message || '未知') + '），建议手动转 H.264', 'err');
-            });
+            status('⚠ ' + f.name + '：' + item._warn, 'err');
           });
         }
         pending--;
@@ -832,7 +711,6 @@
           : '<img src="' + esc(m._local || m.src) + '" alt="">');
       return '<div class="thumb"><span class="type-tag">' + esc(m.type) + '</span>' + vis +
         '<div class="t">' + esc(m.type === 'text' ? '图文块' : (m.src.split('/').pop())) + '</div>' +
-        (m._trans ? '<div class="t" style="color:var(--ok)">✓ ' + esc(m._trans) + '</div>' : '') +
         (m._warn ? '<div class="t" style="color:var(--red)">⚠ ' + esc(m._warn) + '</div>' : '') +
         '<div class="ops"><button data-act="up" data-i="' + i + '">上移</button>' +
         '<button data-act="down" data-i="' + i + '">下移</button>' +
