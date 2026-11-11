@@ -269,6 +269,22 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "便携车机屏改造",
+      "author": "Joe",
+      "form": "",
+      "desc": "便携车机屏改造，只需安装 apk，12v 供电；可自行加装外壳",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwbzre6b-0-i3gf.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
