@@ -306,6 +306,32 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "黑色铝合金相框",
+      "author": "血小板",
+      "form": "",
+      "desc": "同样采用会议预约屏，该预约屏集成安卓 8 系统，支持触摸 wifi",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwc0477n-0-tnrh.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwc049ls-1-2k4i.jpg",
+          "alt": ""
+        },
+        {
+          "type": "video",
+          "src": "assets/media/mmwc04b6e-2-c5e0.mp4",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
