@@ -12,5 +12,40 @@ window.WORKS_DATA = {
     "sourceFine": "本站与 ShowcaseApp 官方无关，作品内容由站长上传。",
     "footerText": "ShowcaseApp DIY 作品展 · 非官方社区项目"
   },
-  "works": []
+  "works": [
+    {
+      "id": "01",
+      "title": "胡桃木平板相框",
+      "author": "血小板",
+      "form": "立式",
+      "desc": "采用 10.1 寸会议预约屏制作，安卓8 系统，12V 直供电，相框采用A4 相框。",
+      "sample": false,
+      "bom": [
+        {
+          "name": "10.1 寸会议预约屏",
+          "qty": "×1"
+        },
+        {
+          "name": "A4 实木相框",
+          "qty": "×1"
+        },
+        {
+          "name": "12V DC5521 电源",
+          "qty": "×1"
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwbrb816-1-9ct1.jpg",
+          "alt": "按屏幕裁切卡纸"
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbrb813-0-88hh.jpg",
+          "alt": "背板热熔胶固定"
+        }
+      ]
+    }
+  ]
 };
