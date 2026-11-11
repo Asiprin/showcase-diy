@@ -182,22 +182,6 @@ window.WORKS_DATA = {
     },
     {
       "id": "",
-      "title": "电子相框",
-      "author": "谢週五",
-      "form": "",
-      "desc": "",
-      "sample": false,
-      "bom": [],
-      "media": [
-        {
-          "type": "video",
-          "src": "assets/media/mmwbz1bxg-0-ved8.mp4",
-          "alt": ""
-        }
-      ]
-    },
-    {
-      "id": "",
       "title": "3.5 寸麦金塔",
       "author": "血小板",
       "form": "",
