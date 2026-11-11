@@ -316,22 +316,6 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
-    },
-    {
-      "id": "",
-      "title": "平板电子相框",
-      "author": "谢週五",
-      "form": "",
-      "desc": "",
-      "sample": false,
-      "bom": [],
-      "media": [
-        {
-          "type": "video",
-          "src": "assets/media/mmwc34sn6-0-n8g3.mp4",
-          "alt": ""
-        }
-      ]
     }
   ]
 };
