@@ -99,6 +99,11 @@ window.WORKS_DATA = {
           "type": "video",
           "src": "assets/media/mmwbw0mml-0-hxi4.mp4",
           "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbwg9im-0-cebr.jpg",
+          "alt": ""
         }
       ]
     },
