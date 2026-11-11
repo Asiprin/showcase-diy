@@ -132,6 +132,27 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "闲置显示器改造",
+      "author": "冯占楠",
+      "form": "立式 / 壁挂",
+      "desc": "闲置显示器改造",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwbwq2wn-0-rimn.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbwq2wn-1-1279.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
