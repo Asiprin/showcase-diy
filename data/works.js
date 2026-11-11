@@ -119,17 +119,17 @@ window.WORKS_DATA = {
       "media": [
         {
           "type": "image",
+          "src": "assets/media/mmwbw8wlt-2-mbu9.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
           "src": "assets/media/mmwbw8wls-0-1nzq.jpg",
           "alt": ""
         },
         {
           "type": "image",
           "src": "assets/media/mmwbw8wlt-1-zzxh.jpg",
-          "alt": ""
-        },
-        {
-          "type": "image",
-          "src": "assets/media/mmwbw8wlt-2-mbu9.jpg",
           "alt": ""
         }
       ]
