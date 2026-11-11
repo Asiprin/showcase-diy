@@ -332,6 +332,22 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "测试",
+      "author": "测试",
+      "form": "",
+      "desc": "",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "video",
+          "src": "assets/media/mmwc2gqb1-0-vqre.mp4",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
