@@ -43,6 +43,11 @@ window.WORKS_DATA = {
         },
         {
           "type": "image",
+          "src": "assets/media/mmwc4qgnm-0-8r9t.jpeg",
+          "alt": ""
+        },
+        {
+          "type": "image",
           "src": "assets/media/mmwbu3kun-1-xvgk.jpg",
           "alt": "背板热熔胶固定"
         }
