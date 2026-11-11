@@ -97,18 +97,18 @@ window.WORKS_DATA = {
       "title": "平板电子相框",
       "author": "冯占楠",
       "form": "立式",
-      "desc": "旧平板改造",
+      "desc": "旧平板改造背板3d打印",
       "sample": false,
       "bom": [],
       "media": [
         {
-          "type": "video",
-          "src": "assets/media/mmwbw0mml-0-hxi4.mp4",
+          "type": "image",
+          "src": "assets/media/mmwbwg9im-0-cebr.jpg",
           "alt": ""
         },
         {
-          "type": "image",
-          "src": "assets/media/mmwbwg9im-0-cebr.jpg",
+          "type": "video",
+          "src": "assets/media/mmwbw0mml-0-hxi4.mp4",
           "alt": ""
         }
       ]
