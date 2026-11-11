@@ -53,7 +53,7 @@ window.WORKS_DATA = {
       "author": "冯占楠",
       "form": "立式 / 壁挂",
       "desc": "用imac的拆机喇叭做的壁画音箱，同时还可以做电子相册，用的24寸显示器改造",
-      "sample": true,
+      "sample": false,
       "bom": [
         {
           "name": "iMac 拆机喇叭",
