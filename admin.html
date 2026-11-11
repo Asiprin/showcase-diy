@@ -64,7 +64,7 @@
     transition:background .35s ease;
   }
   .bar{max-width:1060px; margin:0 auto; padding:13px 28px; display:flex; align-items:center; gap:16px;}
-  .bar .logo{font-size:17px; font-weight:700; letter-spacing:3px;}
+  .bar .logo{font-size:17px; font-weight:700; letter-spacing:normal;}
   .bar .sub{font-size:11.5px; color:var(--grey); letter-spacing:1px;}
   .bar .right{margin-left:auto; display:flex; gap:10px; align-items:center;}
   .badge{font-size:11px; color:var(--grey); border:1px solid var(--line); border-radius:99px; padding:3px 11px;}
@@ -353,6 +353,7 @@
           <div class="btn-row">
             <button class="ghost" id="wiz-4-back">再看看</button>
             <button class="primary" id="btn-publish">发布这件作品</button>
+            <button class="ghost" id="btn-again" style="display:none">继续上传下一件</button>
           </div>
         </div>
       </div>
@@ -551,6 +552,10 @@
       title:'', author:'', form:'', desc:'', sample:true, bom:[], media:[]
     };
     draftFiles = [];
+    editIdx = null;
+    $('btn-publish').textContent = '发布这件作品';
+    $('btn-publish').disabled = false;
+    $('btn-publish').dataset.state = '';
     ['f-id','f-title','f-author','f-form','f-desc'].forEach(function(id){ $(id).value = ''; });
     $('f-sample').checked = true;
     renderBom(); renderThumbs(); renderAltFields();
@@ -799,6 +804,28 @@
     }
   }
 
+  /* ---------- 按钮发布状态机：已发布 ⇄ 保存改动并发布 ---------- */
+  function markPublished(btn){
+    btn.textContent = '已发布';
+    btn.disabled = true;
+    btn.dataset.state = 'published';
+  }
+  function markDirty(btn){
+    if(btn.dataset.state === 'published'){
+      btn.textContent = '保存改动并发布';
+      btn.disabled = false;
+      btn.dataset.state = 'dirty';
+    }
+  }
+  /* 任何编辑动作 → 按钮变回「保存改动并发布」 */
+  document.addEventListener('input', function(e){
+    if($('admin-wrap').style.display === 'none') return;
+    var t = e.target;
+    if(t.closest && t.closest('#tab-upload')) markDirty($('btn-publish'));
+    else if(t.closest && t.closest('#tab-works')) markDirty($('btn-save-works'));
+    else if(t.closest && t.closest('#tab-site')) markDirty($('btn-save-site'));
+  });
+
   $('btn-publish').addEventListener('click', async function(){
     if(!draft.title || !draft.author){ status('标题和作者必填', 'err'); gotoStep(2); return; }
     this.disabled = true;
@@ -811,15 +838,31 @@
       }
       status('正在提交作品内容…');
       draft.media.forEach(function(m){ delete m._local; });
-      data.works.push(JSON.parse(JSON.stringify(draft)));
-      await commitData('发布作品：' + draft.title);
+      var isEdit = editIdx !== null;
+      if(isEdit){
+        data.works[editIdx] = JSON.parse(JSON.stringify(draft));
+      }else{
+        data.works.push(JSON.parse(JSON.stringify(draft)));
+      }
+      await commitData((isEdit ? '更新作品：' : '发布作品：') + draft.title);
       renderWorksList();
-      status('已发布「' + draft.title + '」✓ Pages 通常 1 分钟内更新', 'ok');
-      resetDraft();
+      status((isEdit ? '已保存修改「' : '已发布「') + draft.title + '」✓ Pages 通常 1 分钟内更新', 'ok');
+      draftFiles = [];
+      if(!isEdit){
+        $('btn-again').style.display = '';
+      }
+      markPublished(this);
     }catch(e){
       status(e.message || '发布失败', 'err');
+      this.disabled = false;
     }
-    this.disabled = false;
+  });
+  /* 上传下一件：清空向导重新开始 */
+  $('btn-again').addEventListener('click', function(){
+    editIdx = null;
+    $('btn-publish').textContent = '发布这件作品';
+    resetDraft();
+    this.style.display = 'none';
   });
 
   /* ================= 作品管理 ================= */
@@ -841,23 +884,34 @@
     if(btn.dataset.act === 'rm'){
       if(confirm('确定删除作品「' + data.works[idx].title + '」？记得点保存才会发布。')){
         data.works.splice(idx, 1); renderWorksList(); status('已删除（未保存），点「保存改动并发布」生效', 'ok');
+        markDirty($('btn-save-works'));
+        $('btn-save-works').disabled = false;
       }
     }else if(btn.dataset.act === 'edit'){
       editWork(idx);
     }
   });
+  var editIdx = null;   /* 非 null = 编辑已有作品 */
   function editWork(idx){
     var w = data.works[idx];
-    var title = prompt('作品标题：', w.title || ''); if(title === null) return;
-    var author = prompt('作者 / 用户（必填）：', w.author || ''); if(author === null) return;
-    if(!title.trim() || !author.trim()){ status('标题和作者都必填，已取消', 'err'); return; }
-    var form = prompt('形态（如 桌面立式 / 壁挂）：', w.form || '');
-    var desc = prompt('成品介绍：', w.desc || '');
-    w.title = title.trim(); w.author = author.trim();
-    if(form !== null) w.form = form.trim();
-    if(desc !== null) w.desc = desc;
-    renderWorksList();
-    status('已修改「' + w.title + '」（未保存），点「保存改动并发布」生效', 'ok');
+    editIdx = idx;
+    draft = JSON.parse(JSON.stringify(w));
+    draft.sample = w.sample !== false;
+    draftFiles = [];
+    $('f-id').value = draft.id || '';
+    $('f-title').value = draft.title || '';
+    $('f-author').value = draft.author || '';
+    $('f-form').value = draft.form || '';
+    $('f-desc').value = draft.desc || '';
+    $('f-sample').checked = draft.sample;
+    renderBom(); renderThumbs(); renderAltFields();
+    /* 跳回上传向导的「填写信息」步 */
+    document.querySelector('.tabs button[data-tab="upload"]').click();
+    gotoStep(2);
+    $('btn-publish').textContent = '保存修改并发布';
+    $('btn-again').style.display = 'none';
+    status('正在编辑「' + draft.title + '」，改完点「保存修改并发布」', 'ok');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   $('btn-save-works').addEventListener('click', async function(){
     this.disabled = true;
@@ -868,8 +922,9 @@
       status('正在提交…');
       await commitData('更新作品（管理后台）');
       status('已保存 ✓ Pages 通常 1 分钟内更新', 'ok');
-    }catch(e){ status(e.message || '保存失败', 'err'); }
-    this.disabled = false;
+      markPublished(this);
+      this.disabled = true;
+    }catch(e){ status(e.message || '保存失败', 'err'); this.disabled = false; }
   });
 
   /* ================= 首页文案 ================= */
@@ -884,8 +939,9 @@
       status('正在提交…');
       await commitData('更新首页文案（管理后台）');
       status('文案已保存 ✓ Pages 通常 1 分钟内更新', 'ok');
-    }catch(e){ status(e.message || '保存失败', 'err'); }
-    this.disabled = false;
+      markPublished(this);
+      this.disabled = true;
+    }catch(e){ status(e.message || '保存失败', 'err'); this.disabled = false; }
   });
 
   $('btn-disconnect').addEventListener('click', function(){
