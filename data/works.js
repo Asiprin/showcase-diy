@@ -89,7 +89,7 @@ window.WORKS_DATA = {
     {
       "id": "",
       "title": "平板电子相框",
-      "author": "null",
+      "author": "冯占楠",
       "form": "立式",
       "desc": "旧平板改造",
       "sample": false,
