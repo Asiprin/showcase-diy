@@ -147,6 +147,45 @@ window.WORKS_DATA = {
           "alt": "背板热熔胶固定"
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "壁画音箱",
+      "author": "冯占楠",
+      "form": "立式 / 壁挂",
+      "desc": "用imac的拆机喇叭做的壁画音箱，同时还可以做电子相册，用的24寸显示器改造",
+      "sample": true,
+      "bom": [
+        {
+          "name": "iMac 拆机喇叭",
+          "qty": "×1"
+        },
+        {
+          "name": "24 寸便携屏",
+          "qty": "×1"
+        },
+        {
+          "name": "安卓开发板",
+          "qty": "×1"
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwbu7cfr-0-nxkh.png",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwbuau5j-2-s0kj.jpg",
+          "alt": ""
+        },
+        {
+          "type": "video",
+          "src": "assets/media/mmwbu7fda-1-ovet.mp4",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
