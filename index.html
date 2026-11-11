@@ -146,7 +146,10 @@
     display:grid; place-items:center; width:100%; height:100%;
     border-radius:50%; background:var(--card); padding:2px; font-style:normal;
   }
-  .avatar svg{width:100%; height:100%; display:block; border-radius:50%;}
+  .av-emoji{
+    width:100%; height:100%; border-radius:50%;
+    display:grid; place-items:center; font-size:17px; line-height:1;
+  }
   .post-head .who{min-width:0; flex:1;}
   .post-head .who p:first-child{font-size:14px; font-weight:650; line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .post-head .who p:last-child{font-size:11.5px; color:var(--grey); line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -175,15 +178,7 @@
     border:1px solid rgba(255,255,255,.3); border-radius:99px; padding:2px 9px;
   }
 
-  /* 分段进度条 */
-  .ig-segs{
-    position:absolute; inset:10px 11px auto; z-index:7;
-    display:flex; gap:3.5px; pointer-events:none;
-  }
-  .ig-segs .seg{flex:1; height:3px; border-radius:99px; background:rgba(255,255,255,.35); overflow:hidden;}
-  .ig-segs .seg i{display:block; height:100%; width:100%; border-radius:99px; background:#fff; transform:scaleX(0); transform-origin:left;}
-
-  /* 计数/暂停 */
+  /* 计数（右上角，仅数量） */
   .ig-count{
     position:absolute; top:22px; right:10px; z-index:7;
     display:flex; align-items:center; gap:5px;
@@ -289,6 +284,22 @@
   .lb-play .ic-pause{display:none;}
   .lb-play.playing .ic-play{display:none;}
   .lb-play.playing .ic-pause{display:block;}
+  /* 灯箱静音开关（视频右下角） */
+  .lb-sound{
+    position:absolute; right:16px; bottom:16px;
+    width:42px; height:42px; border-radius:50%;
+    border:1px solid rgba(255,255,255,.4);
+    background:rgba(20,20,18,.45); color:#fff;
+    display:none; place-items:center; cursor:pointer;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    transition:background .2s ease;
+  }
+  .lb-sound:hover{background:rgba(20,20,18,.65);}
+  .lb-sound.show{display:grid;}
+  .lb-sound svg{width:18px; height:18px; fill:currentColor;}
+  .lb-sound .ic-on{display:none;}
+  .lb-sound.sound-on .ic-off{display:none;}
+  .lb-sound.sound-on .ic-on{display:block;}
   /* 播放中隐藏播放按钮（鼠标移开按钮后） */
   .lb-stage.playing .lb-play{opacity:0;}
   .lb-stage.playing:hover .lb-play{opacity:1;}
@@ -421,6 +432,10 @@
       <svg class="ic-play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>
       <svg class="ic-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>
     </button>
+    <button class="lb-sound" id="lb-sound" aria-label="切换声音">
+      <svg class="ic-off" viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="m15.5 9.5 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg class="ic-on" viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M15 9.2a4 4 0 0 1 0 5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17.8 6.5a8 8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
   </div>
   <button class="lb-nav lb-next" id="lb-next" aria-label="下一张">›</button>
   <div class="lb-cap" id="lb-cap"></div>
@@ -466,6 +481,7 @@
     var lbImg = document.getElementById('lb-img');
     var lbVideo = document.getElementById('lb-video');
     var lbPlay = document.getElementById('lb-play');
+    var lbSound = document.getElementById('lb-sound');
     var lbStage = lb.querySelector('.lb-stage');
     var lbCap = document.getElementById('lb-cap');
     var lbPrev = document.getElementById('lb-prev');
@@ -478,6 +494,9 @@
       lbPlay.classList.toggle('playing', playing);
       lbStage.classList.toggle('playing', playing);
     }
+    function syncSoundIcon(){
+      lbSound.classList.toggle('sound-on', !lbVideo.muted);
+    }
     function show(){
       var it = list[li];
       var isVideo = it.type === 'video';
@@ -486,10 +505,12 @@
       lbImg.classList.toggle('on', !isVideo);
       lbVideo.classList.toggle('on', isVideo);
       lbPlay.classList.toggle('show', isVideo);
+      lbSound.classList.toggle('show', isVideo);
       if(isVideo){
         if(lbVideo.src !== it.src){ lbVideo.src = it.src; lbVideo.load(); }
-        lbVideo.muted = true;               /* 默认静音，不自动播 */
+        /* 不再强制静音：沿用当前声音状态（与小图一致，默认静音） */
         syncPlayIcon();
+        syncSoundIcon();
       }else{
         lbImg.src = it.src;
         lbImg.alt = it.alt || '';
@@ -527,6 +548,12 @@
     });
     lbVideo.addEventListener('play', syncPlayIcon);
     lbVideo.addEventListener('pause', syncPlayIcon);
+    /* 灯箱视频静音开关 */
+    lbSound.addEventListener('click', function(e){
+      e.stopPropagation();
+      lbVideo.muted = !lbVideo.muted;
+      syncSoundIcon();
+    });
     document.addEventListener('keydown', function(e){
       if(!lb.classList.contains('on')) return;
       if(e.key === 'Escape') closeLB();
@@ -549,8 +576,8 @@
         }
       }
       if(!slide || window.__suppressZoom){ return; }
-      /* 视频上的按钮/画面点击不进灯箱（视频本身可直接播） */
-      if(e.target.closest && (e.target.closest('.v-btn') || e.target.tagName === 'VIDEO')) return;
+      /* 视频按钮点击不进灯箱；图片/视频区域点击 → 进灯箱 */
+      if(e.target.closest && e.target.closest('.v-btn')) return;
       var img = slide.querySelector('img');
       var vid = slide.querySelector('video');
       if(!img && !vid) return;
@@ -579,23 +606,14 @@
     }, true);
   })();
 
-  /* ---------- 随机头像（按作者名哈希：同作者稳定，不同作者不同形不同色） ---------- */
+  /* ---------- 随机头像（emoji 版：按作者名哈希取，同作者稳定、不同作者不同） ---------- */
+  var EMOJI_POOL = ['🛠️','🔧','🪛','📷','🖼️','💡','⚡','🔌','📟','🕹️','🎨','🧩','🤖','💻','🖥️','⌨️','🎛️','🔋','🪵','🪟','🧊','🔭','📻','🎧','🪄','🌟','🚀','🧲','⚙️','🪤'];
   function avatarSVG(seed){
     var s = String(seed || '·'), h = 0;
     for(var i = 0; i < s.length; i++){ h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+    var emoji = EMOJI_POOL[h % EMOJI_POOL.length];
     var hue = h % 360;
-    var hue2 = (hue + 40 + (h >> 8) % 80) % 360;
-    var variant = (h >> 4) % 5;
-    var bg = 'hsl(' + hue + ',46%,72%)';
-    var fg = 'hsl(' + hue2 + ',52%,38%)';
-    var art = [
-      '<circle cx="20" cy="15" r="6.5" fill="' + fg + '"/><path d="M8 34a12 9 0 0 1 24 0Z" fill="' + fg + '"/>',
-      '<circle cx="20" cy="20" r="9" fill="none" stroke="' + fg + '" stroke-width="3.5"/><circle cx="20" cy="20" r="3" fill="' + fg + '"/>',
-      '<path d="M8 28c4-12 20-12 24 0" fill="none" stroke="' + fg + '" stroke-width="3.5" stroke-linecap="round"/><circle cx="13.5" cy="15" r="2.6" fill="' + fg + '"/><circle cx="26.5" cy="15" r="2.6" fill="' + fg + '"/>',
-      '<rect x="10" y="10" width="9" height="9" rx="2.5" fill="' + fg + '"/><rect x="21" y="21" width="9" height="9" rx="2.5" fill="' + fg + '"/><rect x="21" y="10" width="9" height="9" rx="4.5" fill="' + fg + '" opacity=".55"/><rect x="10" y="21" width="9" height="9" rx="4.5" fill="' + fg + '" opacity=".55"/>',
-      '<path d="M20 8l3.4 7.2 7.6 1-5.6 5.4 1.4 7.8-6.8-3.8-6.8 3.8 1.4-7.8-5.6-5.4 7.6-1z" fill="' + fg + '"/>'
-    ][variant];
-    return '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="' + bg + '"/>' + art + '</svg>';
+    return '<span class="av-emoji" style="background:hsl(' + hue + ',46%,72%)" aria-hidden="true">' + emoji + '</span>';
   }
 
   function esc(s){
@@ -633,7 +651,6 @@
       return '<div class="ig-slide"><img src="' + esc(m.src) + '" alt="' + esc(m.alt || w.title) + '" draggable="false"></div>';
     }).join('');
 
-    var segsHTML = media.map(function(_, i){ return '<div class="seg"><i></i></div>'; }).join('');
     var dotsHTML = media.map(function(_, i){ return '<i></i>'; }).join('');
     var bomHTML = (w.bom || []).map(function(b){
       return '<li><span>' + esc(b.name) + '</span><span>' + esc(b.qty) + '</span></li>';
@@ -650,7 +667,6 @@
       '</header>' +
       '<div class="ig-media" tabindex="0" role="region" aria-roledescription="carousel" aria-label="' + esc(w.title) + '：' + n + ' 张素材，左右方向键切换">' +
         '<div class="ig-track">' + slidesHTML + '</div>' +
-        '<div class="ig-segs">' + segsHTML + '</div>' +
         '<div class="ig-count"><span class="num">1/' + n + '</span></div>' +
         (n > 1 ? '<button class="ig-arrow prev" aria-label="上一张">' + SVG.left + '</button><button class="ig-arrow next" aria-label="下一张">' + SVG.right + '</button>' : '') +
       '</div>' +
@@ -673,7 +689,6 @@
   function initPost(el, w, media, n){
     var mediaBox = el.querySelector('.ig-media');
     var track = el.querySelector('.ig-track');
-    var segs = el.querySelectorAll('.ig-segs .seg i');
     var dots = el.querySelectorAll('.ig-dots i');
     var num = el.querySelector('.ig-count .num');
     var likeBtn = el.querySelector('.like');
@@ -712,9 +727,6 @@
     /* 状态同步 */
     function render(){
       num.textContent = (idx + 1) + '/' + n;
-      segs.forEach(function(s, i){
-        s.style.transform = 'scaleX(' + (i <= idx ? 1 : 0) + ')';
-      });
       dots.forEach(function(d, i){
         var dist = Math.abs(i - idx);
         var sc = dist === 0 ? 1.2 : dist === 1 ? .9 : dist === 2 ? .7 : .5;
@@ -738,9 +750,9 @@
       var slide = v.parentElement;
       var playBtn = slide.querySelector('.v-play');
       var muteBtn = slide.querySelector('.v-mute');
-      v.muted = true;
       function syncPlay(){ if(playBtn) playBtn.innerHTML = v.paused ? SVG.play : SVG.pause; }
-      syncPlay();
+      function syncMute(){ if(muteBtn){ muteBtn.innerHTML = v.muted ? SVG.soundOff : SVG.soundOn; } }
+      syncPlay(); syncMute();
       if(playBtn) playBtn.addEventListener('click', function(e){
         e.stopPropagation();
         if(v.paused) v.play(); else v.pause();
@@ -751,13 +763,8 @@
       if(muteBtn) muteBtn.addEventListener('click', function(e){
         e.stopPropagation();
         v.muted = !v.muted;
-        muteBtn.innerHTML = v.muted ? SVG.soundOff : SVG.soundOn;
+        syncMute();
         muteBtn.setAttribute('aria-label', v.muted ? '打开声音' : '静音');
-      });
-      /* 点视频画面也可播放/暂停 */
-      v.addEventListener('click', function(e){
-        e.stopPropagation();
-        if(v.paused) v.play(); else v.pause();
       });
     });
 
@@ -790,7 +797,7 @@
     /* ---- 拖拽（弹簧回弹） ---- */
     track.addEventListener('pointerdown', function(e){
       if(e.target.tagName === 'VIDEO') return;
-      if(e.target.closest && e.target.closest('.v-mute')) return;   /* 静音按钮不启动拖拽 */
+      if(e.target.closest && e.target.closest('.v-btn')) return;   /* 视频按钮不启动拖拽 */
       dragging = true; panned = false;
       startX = lastX = e.clientX; startOff = -idx * width; vel = 0; lastT = performance.now();
       track.classList.add('dragging');
