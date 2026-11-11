@@ -130,15 +130,15 @@
   }
   .sort-btn:hover{background:var(--hover-soft); color:var(--ink);}
   .sort-btn svg{width:13px; height:13px;}
+  /* JS 分列瀑布流（规避 Safari 多列+transform 合成层不绘制的 bug） */
   .posts{
-    columns:3; column-gap:28px;
+    display:flex; gap:28px; align-items:flex-start;
   }
-  .posts .post{
-    break-inside:avoid; display:inline-block; width:100%; vertical-align:top;
-    margin-bottom:28px;
+  .post-col{
+    flex:1; min-width:0;
+    display:flex; flex-direction:column; gap:28px;
   }
-  @media (max-width:860px){.posts{columns:2;}}
-  @media (max-width:560px){.posts{columns:1;}}
+  .posts .post{width:100%;}
 
   .post{
     width:100%; background:var(--card);
@@ -172,10 +172,11 @@
     background:var(--media-bg); touch-action:pan-y; user-select:none; -webkit-user-select:none;
     transition:aspect-ratio .32s cubic-bezier(.22,.7,.25,1);
   }
-  .ig-track{display:flex; height:100%; cursor:grab;}
+  /* track/媒体绝对定位填满：绕开 Safari 百分比高度不解析的 bug（图片会 0 高消失） */
+  .ig-track{position:absolute; inset:0; display:flex; cursor:grab; will-change:transform;}
   .ig-track.dragging{cursor:grabbing;}
   .ig-slide{flex:0 0 100%; height:100%; position:relative;}
-  .ig-slide img, .ig-slide video{width:100%; height:100%; object-fit:cover; display:block; pointer-events:none;}
+  .ig-slide img, .ig-slide video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; pointer-events:none;}
   .ig-slide video{pointer-events:auto;}
   .ig-slide .txt{
     position:absolute; left:0; right:0; bottom:0;
@@ -735,6 +736,15 @@
   var sortDesc = false;
   function renderPosts(){
     wrap.innerHTML = '';
+    /* 按视口宽建列：桌面 3 列 / 平板 2 列 / 手机 1 列 */
+    var nCols = window.innerWidth > 860 ? 3 : (window.innerWidth > 560 ? 2 : 1);
+    var cols = [];
+    for(var ci = 0; ci < nCols; ci++){
+      var col = document.createElement('div');
+      col.className = 'post-col';
+      wrap.appendChild(col);
+      cols.push({ el: col, h: 0 });
+    }
     var list = (D.works || []).slice();
     if(sortDesc) list.reverse();
     list.forEach(function(w, wi){
@@ -785,12 +795,26 @@
         (bomHTML ? '<h5>硬件清单</h5><ul>' + bomHTML + '</ul>' : '') +
       '</div>';
 
-    wrap.appendChild(el);
+    /* 放进当前最短列（瀑布流贴紧） */
+    var target = cols[0];
+    for(var k = 1; k < cols.length; k++){ if(cols[k].h < target.h) target = cols[k]; }
+    target.el.appendChild(el);
     initPost(el, w, media, n);
+    target.h = target.el.scrollHeight;    /* 量真实高度（含图比例） */
     });
   }
   renderPosts();
   loadLikeCounts();
+
+  /* 视口跨断点时重新分列（列数 3/2/1） */
+  var rzTimer = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(rzTimer);
+    rzTimer = setTimeout(function(){
+      var want = window.innerWidth > 860 ? 3 : (window.innerWidth > 560 ? 2 : 1);
+      if(wrap.querySelectorAll('.post-col').length !== want){ renderPosts(); loadLikeCounts(); }
+    }, 250);
+  });
 
   /* 排序切换：正序 ⇄ 倒序 */
   (function(){
