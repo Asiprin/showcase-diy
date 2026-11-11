@@ -179,7 +179,7 @@
   .pv-media .track img, .pv-media .track video{width:100%; height:100%; object-fit:cover; flex:0 0 100%;}
   /* 预览视频按钮：左下播放/暂停、右下静音（与首页一致） */
   .pv-vbtn{
-    position:absolute; z-index:8; width:32px; height:32px; border-radius:50%;
+    position:absolute; z-index:8; width:32px; height:32px; padding:0; border-radius:50%;
     border:1px solid rgba(255,255,255,.5); background:rgba(20,20,18,.42);
     display:grid; place-items:center; cursor:pointer;
     backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
@@ -187,6 +187,16 @@
   .pv-vbtn:hover{background:rgba(20,20,18,.62);}
   .pv-play{left:9px; bottom:10px;}
   .pv-mute{right:9px; bottom:10px;}
+
+  /* 填写信息步：素材缩略图网格（图 + 下方说明输入） */
+  .media-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px;}
+  .media-cell{border:1px solid var(--line); border-radius:11px; overflow:hidden; background:var(--card);}
+  .media-thumb{height:110px; background:var(--media-bg); display:grid; place-items:center; overflow:hidden;}
+  .media-thumb img, .media-thumb video{width:100%; height:100%; object-fit:cover; display:block;}
+  .text-thumb{padding:8px 10px; font-size:11px; line-height:1.6; color:var(--grey); overflow:hidden; width:100%; height:100%;}
+  .media-cell input{border:0; border-top:1px solid var(--line); border-radius:0; font-size:11.5px; padding:7px 9px; background:transparent;}
+  .media-cell input:focus{outline-offset:-2px;}
+  .mi-note{border-top:1px solid var(--line); padding:7px 9px; font-size:11px; color:var(--meta);}
   .pv-nav{position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; padding:0; border-radius:50%;
     background:rgba(255,255,255,.82); border:1px solid rgba(255,255,255,.5); font-size:15px; cursor:pointer;
     opacity:0; transition:opacity .2s ease, background .2s ease; box-shadow:0 4px 12px rgba(0,0,0,.14);
@@ -330,7 +340,7 @@
           <label>硬件清单</label>
           <div class="bom-wrap" id="bom-wrap"></div>
           <div class="btn-row"><button class="ghost" id="btn-add-bom">+ 加一项</button></div>
-          <label>素材说明（每张图/视频的 alt 文字，可留空）</label>
+          <label>素材说明（点图下方输入，可留空）</label>
           <div id="alt-wrap"></div>
           <div class="btn-row">
             <button class="ghost" id="wiz-2-back">上一步</button>
@@ -467,6 +477,9 @@
     var hue = h % 360;
     return '<span style="width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-size:17px;line-height:1;background:hsl(' + hue + ',46%,72%)" aria-hidden="true">' + emoji + '</span>';
   }
+
+  /* 视频首帧封面：#t=0.001 让浏览器解码并显示第一帧 */
+  function vSrc(u){ u = String(u || ''); return esc(u) + (u.indexOf('#') === -1 ? '#t=0.001' : ''); }
 
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
@@ -641,7 +654,7 @@
     var wrap = $('thumbs');
     wrap.innerHTML = draft.media.map(function(m, i){
       var vis = m.type === 'video'
-        ? '<video src="' + esc(m._local || m.src) + '" muted></video>'
+        ? '<video src="' + vSrc(m._local || m.src) + '" muted preload="metadata"></video>'
         : (m.type === 'text'
           ? '<div style="height:88px;background:var(--wrap-bg);padding:8px;font-size:10.5px;color:var(--grey);overflow:hidden">' + esc(m.text) + '</div>'
           : '<img src="' + esc(m._local || m.src) + '" alt="">');
@@ -686,10 +699,17 @@
     }
   });
   function renderAltFields(){
-    $('alt-wrap').innerHTML = draft.media.map(function(m, i){
-      if(m.type === 'text') return '';
-      return '<div class="bom-row"><input type="text" data-alt="' + i + '" value="' + esc(m.alt) + '" placeholder="第 ' + (i + 1) + ' 个素材的说明（可留空）"></div>';
-    }).join('');
+    $('alt-wrap').innerHTML = '<div class="media-grid">' + draft.media.map(function(m, i){
+      var vis = m.type === 'video'
+        ? '<video src="' + vSrc(m._local || m.src) + '" muted playsinline preload="metadata"></video>'
+        : m.type === 'text'
+          ? '<div class="text-thumb">' + esc(m.text || '') + '</div>'
+          : '<img src="' + esc(m._local || m.src) + '" alt="">';
+      var input = m.type === 'text'
+        ? '<div class="mi-note">图文块</div>'
+        : '<input type="text" data-alt="' + i + '" value="' + esc(m.alt) + '" placeholder="第 ' + (i + 1) + ' 张说明（可留空）">';
+      return '<div class="media-cell"><div class="media-thumb">' + vis + '</div>' + input + '</div>';
+    }).join('') + '</div>';
   }
   function collectDraft(){
     draft.id = $('f-id').value.trim();
@@ -727,7 +747,7 @@
     var w = draft;
     var slides = w.media.map(function(m){
       if(m.type === 'video') return '<div class="pv-slide" style="flex:0 0 100%;height:100%;position:relative">' +
-        '<video src="' + esc(m._local || m.src) + '" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video>' +
+        '<video src="' + vSrc(m._local || m.src) + '" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video>' +
         '<button class="pv-vbtn pv-play" aria-label="播放/暂停"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:#fff"><path d="M7 4.5v15l13-7.5z"/></svg></button>' +
         '<button class="pv-vbtn pv-mute" aria-label="切换声音"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:#fff"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="m15.5 9.5 5 5m0-5-5 5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></button>' +
         '</div>';
@@ -909,7 +929,7 @@
       var coverVideo = !cover && (w.media || []).find(function(m){ return m.type === 'video' && m.src; });
       var thumb = cover
         ? '<img src="' + esc(cover.src) + '" alt="">'
-        : (coverVideo ? '<video src="' + esc(coverVideo.src) + '" muted playsinline preload="metadata"></video>' : '<img alt="">');
+        : (coverVideo ? '<video src="' + vSrc(coverVideo.src) + '" muted playsinline preload="metadata"></video>' : '<img alt="">');
       return '<div class="work-item" data-i="' + i + '">' +
         thumb +
         '<div class="wi-main"><div class="wi-title">' + esc(w.title || '未命名') + '</div>' +

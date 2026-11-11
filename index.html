@@ -672,7 +672,9 @@
 
     var slidesHTML = media.map(function(m){
       if(m.type === 'video'){
-        return '<div class="ig-slide"><video src="' + esc(m.src) + '" muted preload="metadata" playsinline></video>' +
+        /* #t=0.001：让浏览器解码首帧作为封面显示 */
+        var vsrc = esc(m.src) + (String(m.src).indexOf('#') === -1 ? '#t=0.001' : '');
+        return '<div class="ig-slide"><video src="' + vsrc + '" muted preload="metadata" playsinline></video>' +
           '<button class="v-btn v-play" aria-label="播放/暂停">' + SVG.play + '</button>' +
           '<button class="v-btn v-mute" aria-label="切换声音">' + SVG.soundOff + '</button></div>';
       }
