@@ -85,6 +85,22 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "平板电子相框",
+      "author": "null",
+      "form": "立式",
+      "desc": "旧平板改造",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "video",
+          "src": "assets/media/mmwbw0mml-0-hxi4.mp4",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
