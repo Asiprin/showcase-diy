@@ -321,6 +321,22 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "电子相框",
+      "author": "谢週五",
+      "form": "",
+      "desc": "",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "video",
+          "src": "assets/media/mmwcvpx7e-0-1fl1.mp4",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
