@@ -758,7 +758,18 @@
 
   /* ================= 渲染帖子 ================= */
   var wrap = document.getElementById('posts');
-  var sortDesc = false;
+  var sortMode = 'random';   /* random（默认，每次刷新重排）| asc | desc */
+  function sortList(list){
+    if(sortMode === 'asc') return list;
+    if(sortMode === 'desc') return list.slice().reverse();
+    /* 随机洗牌（Fisher–Yates） */
+    var a = list.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
   function renderPosts(){
     wrap.innerHTML = '';
     /* 按视口宽建列：桌面 3 列 / 平板 2 列 / 手机 1 列 */
@@ -770,8 +781,7 @@
       wrap.appendChild(col);
       cols.push({ el: col, h: 0 });
     }
-    var list = (D.works || []).slice();
-    if(sortDesc) list.reverse();
+    var list = sortList((D.works || []).slice());
     list.forEach(function(w, wi){
     var media = (w.media && w.media.length) ? w.media : [];
     var n = Math.max(1, media.length);
@@ -841,14 +851,17 @@
     }, 250);
   });
 
-  /* 排序切换：正序 ⇄ 倒序 */
+  /* 排序切换：随机 ⇄ 正序 ⇄ 倒序 */
   (function(){
     var btn = document.getElementById('sort-btn');
     var label = document.getElementById('sort-label');
     if(!btn) return;
+    var order = ['random', 'asc', 'desc'];
+    var names = { random: '随机', asc: '正序', desc: '倒序' };
+    label.textContent = names[sortMode];
     btn.addEventListener('click', function(){
-      sortDesc = !sortDesc;
-      label.textContent = sortDesc ? '倒序' : '正序';
+      sortMode = order[(order.indexOf(sortMode) + 1) % order.length];
+      label.textContent = names[sortMode];
       renderPosts();
       loadLikeCounts();
     });

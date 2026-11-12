@@ -685,6 +685,7 @@
           renderThumbs(); renderAltFields();
           $('wiz-1-next').disabled = draft.media.length === 0;
           status('已添加 ' + files.length + ' 个素材', 'ok');
+          markDirty($('btn-publish'));   /* 媒体变动 → 可发布 */
         }
       };
       reader.readAsDataURL(f);
@@ -698,6 +699,7 @@
       draft.media.push({ type:'text', src:'', text: txt.trim(), alt:'' });
       renderThumbs(); renderAltFields();
       $('wiz-1-next').disabled = false;
+      markDirty($('btn-publish'));   /* 媒体变动 → 可发布 */
     }
   });
 
@@ -733,6 +735,7 @@
       }
     }
     renderThumbs(); renderAltFields();
+    markDirty($('btn-publish'));   /* 媒体变动 → 可发布 */
   });
 
   /* --- 步骤 2：信息 --- */
@@ -935,6 +938,15 @@
     else if(t.closest && t.closest('#tab-works')) markDirty($('btn-save-works'));
     else if(t.closest && t.closest('#tab-site')) markDirty($('btn-save-site'));
   });
+  /* 媒体操作（增删/移动/上传/图文）是 click，也要变脏 */
+  document.addEventListener('click', function(e){
+    if($('admin-wrap').style.display === 'none') return;
+    var t = e.target;
+    if(!t.closest) return;
+    if(t.closest('#tab-upload') && (t.closest('[data-act]') || t.closest('#dropzone') || t.closest('#btn-add-text'))){
+      markDirty($('btn-publish'));
+    }
+  });
 
   $('btn-publish').addEventListener('click', async function(){
     if(!draft.title || !draft.author){ status('标题和作者必填', 'err'); gotoStep(2); return; }
@@ -1028,6 +1040,8 @@
     editIdx = idx;
     gotoStep(2);
     $('btn-publish').textContent = '保存修改并发布';
+    $('btn-publish').disabled = false;
+    $('btn-publish').dataset.state = 'dirty';
     $('btn-again').style.display = 'none';
     status('正在编辑「' + draft.title + '」，改完点「保存修改并发布」', 'ok');
     window.scrollTo({ top: 0, behavior: 'smooth' });
