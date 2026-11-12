@@ -337,6 +337,32 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "三星note3改造",
+      "author": "当地较为英俊的年轻人",
+      "form": "",
+      "desc": "三星note3改直供电，因为note3屏幕还挺大的，看看照片还行，系统刷了安卓8.1，外壳3d打印，放电视机旁，给手机红外发射口留了个洞，让workbuddy写了个代码，装了ava，然后接入米家，用红外遥控电视机。又能当照片看，又能控制电视机。摄像头位置没留，当监控用的话我得极空间cpu不够用，所以取消了，总得来说，老手机性价比就是高，啥硬件都有",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwcvzqli-0-bhh6.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwcvzsly-1-02yy.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwcvzur9-2-92ia.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
