@@ -3,6 +3,7 @@
 把闲置的屏幕，做成艺术电子相框。
 
 社区 DIY 硬件作品展示站——展示大家用开源项目 [ShowcaseApp](https://github.com/mrjoechen/ShowcaseApp) 制作的实体数字相框作品。每件作品附成品介绍与硬件清单，看得见做法，也做得出来。
+<img width="566" height="765" alt="c80cc9a66d03c10563fb8ce49c4800bf" src="https://github.com/user-attachments/assets/06e5e471-3bf1-484d-965b-dc2fc0624824" />
 
 > **本站为社区作品展示，非官方。** 作品基于开源项目 ShowcaseApp 制作，本站与 ShowcaseApp 官方无关，作品内容由站长上传。
 
