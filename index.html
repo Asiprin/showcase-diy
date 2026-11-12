@@ -628,7 +628,7 @@
       e.stopPropagation();
       if(lbVideo.paused) lbVideo.play(); else lbVideo.pause();
     });
-    lbVideo.addEventListener('play', syncPlayIcon);
+    lbVideo.addEventListener('play', function(){ syncPlayIcon(); soloVideo(lbVideo); });
     lbVideo.addEventListener('pause', syncPlayIcon);
     /* 灯箱视频静音开关 */
     lbSound.addEventListener('click', function(e){
@@ -701,6 +701,21 @@
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  /* 全局单视频：任何视频开播 → 其余视频暂停并静音（含按钮图标同步） */
+  function soloVideo(active){
+    document.querySelectorAll('video').forEach(function(o){
+      if(o === active) return;
+      if(!o.paused) o.pause();
+      if(!o.muted){
+        o.muted = true;
+        var mb = o.parentElement && o.parentElement.querySelector('.v-mute');
+        if(mb) mb.innerHTML = SVG.soundOff;
+        var sb = document.getElementById('lb-sound');
+        if(o.id === 'lb-video' && sb) sb.classList.remove('sound-on');
+      }
     });
   }
 
@@ -963,7 +978,7 @@
         else v.pause();
         syncPlay();
       });
-      v.addEventListener('play', syncPlay);
+      v.addEventListener('play', function(){ syncPlay(); soloVideo(v); });
       v.addEventListener('pause', syncPlay);
       if(muteBtn) muteBtn.addEventListener('click', function(e){
         e.stopPropagation();
