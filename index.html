@@ -16,45 +16,54 @@
 </script>
 <style>
   :root{
-    --bg:#F4F4F2; --ink:#1B1B19; --grey:#6E6E68;
+    --bg:#EAEAE7; --ink:#1B1B19; --grey:#6E6E68;
     --accent:#B7472A;
     --card:#FFFFFF; --media-bg:#E8E8E4;
     --cap-text:#3F3F3A; --meta:#7C7C75;
     --border:rgba(0,0,0,.07);
-    --header-bg:rgba(244,244,242,.78);
+    --header-bg:rgba(234,234,231,.78);
     --hover-soft:rgba(27,27,25,.06); --dot:rgba(27,27,25,.28);
     --panel-bg:rgba(255,255,255,.55); --panel-border:rgba(255,255,255,.8); --panel-hl:rgba(255,255,255,.9);
     --shadow-post:0 1px 2px rgba(0,0,0,.05), 0 24px 60px -28px rgba(24,24,27,.35);
+    --grid-line:rgba(27,27,25,.028);
   }
   html[data-theme="dark"]{
-    --bg:#141413; --ink:#EDEBE7; --grey:#9B9891;
+    --bg:#101010; --ink:#EDEBE7; --grey:#9B9891;
     --accent:#D2755E;
     --card:#1E1D1B; --media-bg:#2A2926;
     --cap-text:#C9C6C0; --meta:#96938C;
     --border:rgba(255,255,255,.1);
-    --header-bg:rgba(20,20,19,.78);
+    --header-bg:rgba(16,16,16,.78);
     --hover-soft:rgba(255,255,255,.08); --dot:rgba(255,255,255,.3);
     --panel-bg:rgba(255,255,255,.05); --panel-border:rgba(255,255,255,.12); --panel-hl:rgba(255,255,255,.16);
     --shadow-post:0 1px 2px rgba(0,0,0,.3), 0 24px 60px -28px rgba(0,0,0,.7);
+    --grid-line:rgba(255,255,255,.025);
   }
   /* 无 JS 时跟随系统 */
   @media (prefers-color-scheme: dark){
     html:not([data-theme]){
-      --bg:#141413; --ink:#EDEBE7; --grey:#9B9891;
+      --bg:#101010; --ink:#EDEBE7; --grey:#9B9891;
       --accent:#D2755E;
       --card:#1E1D1B; --media-bg:#2A2926;
       --cap-text:#C9C6C0; --meta:#96938C;
       --border:rgba(255,255,255,.1);
-      --header-bg:rgba(20,20,19,.78);
+      --header-bg:rgba(16,16,16,.78);
       --hover-soft:rgba(255,255,255,.08); --dot:rgba(255,255,255,.3);
       --panel-bg:rgba(255,255,255,.05); --panel-border:rgba(255,255,255,.12); --panel-hl:rgba(255,255,255,.16);
       --shadow-post:0 1px 2px rgba(0,0,0,.3), 0 24px 60px -28px rgba(0,0,0,.7);
+      --grid-line:rgba(255,255,255,.025);
     }
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
-    background:var(--bg); color:var(--ink);
+    /* 格子背景：两条低对比细线渐变拼成 55px 网格，隐约透出 */
+    background-color:var(--bg);
+    background-image:
+      linear-gradient(0deg, transparent 24%, var(--grid-line) 25%, var(--grid-line) 26%, transparent 27%, transparent 74%, var(--grid-line) 75%, var(--grid-line) 76%, transparent 77%, transparent),
+      linear-gradient(90deg, transparent 24%, var(--grid-line) 25%, var(--grid-line) 26%, transparent 27%, transparent 74%, var(--grid-line) 75%, var(--grid-line) 76%, transparent 77%, transparent);
+    background-size:55px 55px;
+    color:var(--ink);
     font-family:-apple-system,"PingFang SC","Noto Sans SC","Helvetica Neue",sans-serif;
     font-size:15px; line-height:1.8; -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
@@ -62,9 +71,13 @@
   }
   a{color:inherit;}
 
-  .rise{opacity:0; transform:translateY(18px); animation:rise .9s cubic-bezier(.22,.7,.25,1) forwards;}
+  /* 入场动画用 backwards（结束后交还 transform 控制权给 :hover，forwards 会压住悬停缩放） */
+  .rise{animation:rise .9s cubic-bezier(.22,.7,.25,1) backwards;}
   .rise.d1{animation-delay:.08s;} .rise.d2{animation-delay:.2s;} .rise.d3{animation-delay:.34s;}
-  @keyframes rise{to{opacity:1; transform:none;}}
+  @keyframes rise{
+    from{opacity:0; transform:translateY(18px);}
+    to{opacity:1; transform:none;}
+  }
   @media (prefers-reduced-motion:reduce){.rise{animation:none;opacity:1;transform:none;}}
 
   /* ---------- 顶栏 ---------- */
@@ -145,6 +158,18 @@
     border-radius:26px; overflow:hidden;
     box-shadow:var(--shadow-post);
     outline:1px solid var(--border);
+    position:relative;
+    transition:transform .4s cubic-bezier(.15,.83,.66,1), box-shadow .4s cubic-bezier(.15,.83,.66,1);
+  }
+  /* 悬停轻微放大（Uiverse 卡片缓动），抬起浮出网格 */
+  .post:hover{
+    transform:scale(1.05);
+    z-index:3;
+    box-shadow:0 2px 4px rgba(0,0,0,.06), 0 34px 74px -28px rgba(24,24,27,.4);
+  }
+  @media (prefers-reduced-motion:reduce){
+    .post{transition:none;}
+    .post:hover{transform:none;}
   }
 
   /* 帖子头 */
