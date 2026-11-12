@@ -234,6 +234,28 @@
   .work-item .ops{display:flex; gap:7px;}
   .work-item .ops button{padding:6px 13px; font-size:12px;}
 
+  /* 视图切换：网格 ⇄ 列表 */
+  .view-toggle{display:flex; gap:0; margin-left:auto; border:1px solid var(--line); border-radius:9px; overflow:hidden;}
+  .view-toggle button{
+    border:0; border-radius:0; background:transparent; color:var(--grey);
+    padding:7px 12px; font-size:12px; display:flex; align-items:center; gap:5px;
+  }
+  .view-toggle button.on{background:var(--ink); color:var(--btn-ink);}
+  .view-toggle button svg{width:14px; height:14px; fill:currentColor;}
+
+  /* 网格视图 */
+  .works-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(215px, 1fr)); gap:16px;}
+  .work-card{border:1px solid var(--line); border-radius:13px; overflow:hidden; background:var(--panel-bg); display:flex; flex-direction:column;}
+  .work-card .wc-thumb{aspect-ratio:4/3; background:var(--media-bg); overflow:hidden;}
+  .work-card .wc-thumb img, .work-card .wc-thumb video{width:100%; height:100%; object-fit:cover; display:block;}
+  .work-card .wc-body{padding:11px 13px 13px; display:flex; flex-direction:column; gap:3px; flex:1;}
+  .work-card .wc-title{font-size:13.5px; font-weight:650; line-height:1.4;}
+  .work-card .wc-sub{font-size:11px; color:var(--grey); line-height:1.5;}
+  .work-card .wc-ops{display:flex; gap:7px; margin-top:9px;}
+  .work-card .wc-ops button{padding:6px 12px; font-size:12px;}
+  .works-head-row{display:flex; align-items:center; gap:12px; margin-bottom:16px;}
+  .works-head-row .hint{margin:0;}
+
   .savebar{
     position:fixed; left:0; right:0; bottom:0; z-index:60;
     background:var(--header-bg); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
@@ -380,8 +402,14 @@
     <!-- ============ 作品管理 ============ -->
     <div class="tab-page" id="tab-works">
       <div class="panel">
-        <h2>作品管理</h2>
-        <p class="hint">编辑或删除已发布的作品。改动保存后才会发布。</p>
+        <div class="works-head-row">
+          <h2>作品管理</h2>
+          <p class="hint">编辑或删除已发布的作品。改动保存后才会发布。</p>
+          <div class="view-toggle" id="view-toggle">
+            <button data-view="grid" class="on" aria-label="网格视图"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>网格</button>
+            <button data-view="list" aria-label="列表视图"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></svg>列表</button>
+          </div>
+        </div>
         <div id="works-list"></div>
         <div class="btn-row"><button id="btn-save-works">保存改动并发布</button></div>
       </div>
@@ -989,27 +1017,58 @@
   });
 
   /* ================= 作品管理 ================= */
+  var worksView = 'grid';   /* grid | list */
   function renderWorksList(){
-    $('works-list').innerHTML = data.works.map(function(w, i){
-      /* 缩略图：优先图片，纯视频作品用视频首帧 */
-      var cover = (w.media || []).find(function(m){ return m.type === 'image' && m.src; });
-      var coverVideo = !cover && (w.media || []).find(function(m){ return m.type === 'video' && m.src; });
-      var thumb = cover
-        ? '<img src="' + esc(cover.src) + '" alt="">'
-        : (coverVideo ? '<video src="' + vSrc(coverVideo.src) + '" muted playsinline preload="metadata"></video>' : '<img alt="">');
-      return '<div class="work-item" data-i="' + i + '">' +
-        thumb +
-        '<div class="wi-main"><div class="wi-title">' + esc(w.title || '未命名') + '</div>' +
-        '<div class="wi-sub">' + esc(w.id || '') + (w.author ? ' · by ' + esc(w.author) : '') + ' · ' + ((w.media || []).length) + ' 个素材</div></div>' +
-        '<div class="ops"><button data-act="edit">编辑</button>' +
-        '<button data-act="rm" class="danger">删除</button></div></div>';
-    }).join('') || '<p class="hint">还没有作品。去「上传作品」发第一件。</p>';
+    if(worksView === 'grid'){
+      $('works-list').className = 'works-grid';
+      $('works-list').innerHTML = data.works.map(function(w, i){
+        var cover = (w.media || []).find(function(m){ return m.type === 'image' && m.src; });
+        var coverVideo = !cover && (w.media || []).find(function(m){ return m.type === 'video' && m.src; });
+        var thumb = cover
+          ? '<img src="' + esc(cover.src) + '" alt="">'
+          : (coverVideo ? '<video src="' + vSrc(coverVideo.src) + '" muted playsinline preload="metadata"></video>' : '<img alt="">');
+        return '<div class="work-card" data-i="' + i + '">' +
+          '<div class="wc-thumb">' + thumb + '</div>' +
+          '<div class="wc-body">' +
+            '<div class="wc-title">' + esc(w.title || '未命名') + '</div>' +
+            '<div class="wc-sub">' + esc(w.id || '') + (w.author ? ' · ' + esc(w.author) : '') + ' · ' + ((w.media || []).length) + ' 个素材</div>' +
+            '<div class="wc-ops"><button data-act="edit">编辑</button>' +
+            '<button data-act="rm" class="danger">删除</button></div>' +
+          '</div></div>';
+      }).join('') || '<p class="hint">还没有作品。去「上传作品」发第一件。</p>';
+    }else{
+      $('works-list').className = '';
+      $('works-list').innerHTML = data.works.map(function(w, i){
+        /* 缩略图：优先图片，纯视频作品用视频首帧 */
+        var cover = (w.media || []).find(function(m){ return m.type === 'image' && m.src; });
+        var coverVideo = !cover && (w.media || []).find(function(m){ return m.type === 'video' && m.src; });
+        var thumb = cover
+          ? '<img src="' + esc(cover.src) + '" alt="">'
+          : (coverVideo ? '<video src="' + vSrc(coverVideo.src) + '" muted playsinline preload="metadata"></video>' : '<img alt="">');
+        return '<div class="work-item" data-i="' + i + '">' +
+          thumb +
+          '<div class="wi-main"><div class="wi-title">' + esc(w.title || '未命名') + '</div>' +
+          '<div class="wi-sub">' + esc(w.id || '') + (w.author ? ' · by ' + esc(w.author) : '') + ' · ' + ((w.media || []).length) + ' 个素材</div></div>' +
+          '<div class="ops"><button data-act="edit">编辑</button>' +
+          '<button data-act="rm" class="danger">删除</button></div></div>';
+      }).join('') || '<p class="hint">还没有作品。去「上传作品」发第一件。</p>';
+    }
     initCovers($('works-list'));
   }
+  /* 网格 ⇄ 列表 切换 */
+  document.getElementById('view-toggle').addEventListener('click', function(e){
+    var btn = e.target.closest ? e.target.closest('button[data-view]') : null;
+    if(!btn) return;
+    worksView = btn.dataset.view;
+    this.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b === btn); });
+    renderWorksList();
+  });
   $('works-list').addEventListener('click', function(e){
     var btn = e.target.closest ? e.target.closest('button') : null;
     if(!btn) return;
-    var idx = parseInt(btn.closest('.work-item').dataset.i, 10);
+    var host = btn.closest('.work-item') || btn.closest('.work-card');
+    if(!host) return;
+    var idx = parseInt(host.dataset.i, 10);
     if(btn.dataset.act === 'rm'){
       if(confirm('确定删除作品「' + data.works[idx].title + '」？记得点保存才会发布。')){
         data.works.splice(idx, 1); renderWorksList(); status('已删除（未保存），点「保存改动并发布」生效', 'ok');
