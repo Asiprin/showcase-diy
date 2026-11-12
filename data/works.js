@@ -95,7 +95,7 @@ window.WORKS_DATA = {
     {
       "id": "",
       "title": "平板电子相框",
-      "author": "冯占楠",
+      "author": "null",
       "form": "立式",
       "desc": "旧平板改造背板3d打印",
       "sample": false,
