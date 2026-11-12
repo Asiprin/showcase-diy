@@ -363,6 +363,27 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "便携屏改造",
+      "author": "Milo",
+      "form": "",
+      "desc": "正面直接用个框子贴住，支撑是靠3mm的亚克力背板用vesa螺孔卡进相框。",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "video",
+          "src": "assets/media/mmwcwipcy-0-0ffr.mp4",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwcwj0g3-1-oag0.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
