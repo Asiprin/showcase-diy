@@ -384,6 +384,27 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "触屏音箱改造",
+      "author": "牟鑫磊",
+      "form": "",
+      "desc": "移动创维SK-L1002灵犀屏改造",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmweejgre-0-3ciw.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmweejijx-1-kccu.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
