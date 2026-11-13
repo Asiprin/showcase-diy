@@ -390,7 +390,7 @@ window.WORKS_DATA = {
       "title": "触屏音箱改造",
       "author": "牟鑫磊",
       "form": "",
-      "desc": "移动创维SK-L1002灵犀屏改造",
+      "desc": "移动创维SK-L1002灵犀屏\n国美云定制的带屏音箱，4＋128的，RK3566处理器",
       "sample": false,
       "bom": [],
       "media": [
