@@ -405,6 +405,27 @@ window.WORKS_DATA = {
           "alt": ""
         }
       ]
+    },
+    {
+      "id": "",
+      "title": "国美云定制触屏音箱改造",
+      "author": "我",
+      "form": "",
+      "desc": "国美云gm800是rk3566",
+      "sample": false,
+      "bom": [],
+      "media": [
+        {
+          "type": "image",
+          "src": "assets/media/mmwj4x10a-0-ba75.jpg",
+          "alt": ""
+        },
+        {
+          "type": "image",
+          "src": "assets/media/mmwj4x3i2-1-u9ch.jpg",
+          "alt": ""
+        }
+      ]
     }
   ]
 };
