@@ -795,7 +795,7 @@
     $('bom-wrap').innerHTML = draft.bom.map(function(b, i){
       return '<div class="bom-row"><input type="text" data-b="name" data-i="' + i + '" value="' + esc(b.name) + '" placeholder="部件名">' +
         '<input type="text" data-b="qty" data-i="' + i + '" value="' + esc(b.qty) + '" placeholder="数量">' +
-        '<button class="danger" data-act="del-bom" data-i="' + i + '">删</button></div>';
+        '<button class="danger" data-act="del-bom" data-i="' + i + '">删除</button></div>';
     }).join('');
   }
   $('btn-add-bom').addEventListener('click', function(){
@@ -820,7 +820,7 @@
         '<div class="mi-ops">' +
           '<button data-act="up" data-i="' + i + '">上移</button>' +
           '<button data-act="down" data-i="' + i + '">下移</button>' +
-          '<button class="danger" data-act="del" data-i="' + i + '">删</button>' +
+          '<button class="danger" data-act="del" data-i="' + i + '">删除</button>' +
         '</div></div>';
     }).join('') + '</div>';
     initCovers($('alt-wrap'));
