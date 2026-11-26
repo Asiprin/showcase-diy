@@ -197,6 +197,11 @@
   .media-cell input{border:0; border-top:1px solid var(--line); border-radius:0; font-size:11.5px; padding:7px 9px; background:transparent;}
   .media-cell input:focus{outline-offset:-2px;}
   .mi-note{border-top:1px solid var(--line); padding:7px 9px; font-size:11px; color:var(--meta);}
+  /* 填写信息步：素材格操作条 */
+  .mi-ops{display:flex; border-top:1px solid var(--line);}
+  .mi-ops button{flex:1; border:0; border-radius:0; background:transparent; color:var(--grey); padding:6px 0; font-size:11px; cursor:pointer;}
+  .mi-ops button:hover{background:var(--hover-soft); color:var(--ink);}
+  .mi-ops button.danger:hover{color:var(--red);}
   .pv-nav{position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; padding:0; border-radius:50%;
     background:rgba(255,255,255,.82); border:1px solid rgba(255,255,255,.5); font-size:15px; cursor:pointer;
     opacity:0; transition:opacity .2s ease, background .2s ease; box-shadow:0 4px 12px rgba(0,0,0,.14);
@@ -766,6 +771,25 @@
     markDirty($('btn-publish'));   /* 媒体变动 → 可发布 */
   });
 
+  /* 填写信息步：素材格的 删除/上移/下移 事件委托（与第 1 步同逻辑） */
+  $('alt-wrap').addEventListener('click', function(e){
+    var act = e.target.dataset ? e.target.dataset.act : null;
+    if(!act) return;
+    var i = parseInt(e.target.dataset.i, 10);
+    collectDraft();   /* 先同步 alt 文字，避免重渲染丢失输入 */
+    if(act === 'del'){
+      if(draft.media[i] && draft.media[i].src) draftFiles = draftFiles.filter(function(f){ return f.path !== draft.media[i].src; });
+      draft.media.splice(i, 1);
+    }else{
+      var to = act === 'up' ? i - 1 : i + 1;
+      if(to >= 0 && to < draft.media.length){
+        var t = draft.media[i]; draft.media[i] = draft.media[to]; draft.media[to] = t;
+      }
+    }
+    renderThumbs(); renderAltFields();
+    markDirty($('btn-publish'));   /* 媒体变动 → 可发布 */
+  });
+
   /* --- 步骤 2：信息 --- */
   function renderBom(){
     $('bom-wrap').innerHTML = draft.bom.map(function(b, i){
@@ -792,7 +816,12 @@
       var input = m.type === 'text'
         ? '<div class="mi-note">图文块</div>'
         : '<input type="text" data-alt="' + i + '" value="' + esc(m.alt) + '" placeholder="第 ' + (i + 1) + ' 张说明（可留空）">';
-      return '<div class="media-cell"><div class="media-thumb">' + vis + '</div>' + input + '</div>';
+      return '<div class="media-cell"><div class="media-thumb">' + vis + '</div>' + input +
+        '<div class="mi-ops">' +
+          '<button data-act="up" data-i="' + i + '">上移</button>' +
+          '<button data-act="down" data-i="' + i + '">下移</button>' +
+          '<button class="danger" data-act="del" data-i="' + i + '">删</button>' +
+        '</div></div>';
     }).join('') + '</div>';
     initCovers($('alt-wrap'));
   }
